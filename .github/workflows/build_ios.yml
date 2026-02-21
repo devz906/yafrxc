@@ -9,21 +9,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Clean and Reassemble
+      - name: Reassemble Engine in Safe Harbor
         run: |
-          # Move to resources and ensure NO loose wine folder exists
-          cd Shell/Sources/WineKit/Resources/
-          rm -rf wine
-          # Stitch the parts
-          cat wine_parts.* > wine_engine.zip
-          unzip -q wine_engine.zip
-          # IMPORTANT: Rename the unzipped folder to 'engine' to avoid Info.plist conflicts
-          mv wine engine
-          rm wine_parts.* wine_engine.zip
+          mkdir -p Shell/Sources/WineKit/Resources/
+          # Stitch the parts in a separate folder first
+          cat EngineParts/wine_parts.* > wine_engine.zip
+          unzip -q wine_engine.zip -d extracted_engine
+          # Move it to a subfolder that we will manually inject later
+          mv extracted_engine Shell/Sources/WineKit/Resources/engine_data
         
       - name: Build IPA
         run: |
           cd Shell
+          # Build the UI alone first (fast and clean)
           xcodebuild archive \
             -scheme WineKit \
             -destination "generic/platform=iOS" \
@@ -35,6 +33,11 @@ jobs:
           mkdir -p ../Payload
           APP_PATH=$(find ../WineKit.xcarchive -name "*.app" -type d | head -n 1)
           cp -r "$APP_PATH" ../Payload/
+          
+          # Now manually inject the engine data into the IPA Payload
+          # This bypasses the Xcode resource scanner errors
+          cp -r Sources/WineKit/Resources/engine_data "../Payload/$(basename "$APP_PATH")/"
+          
           cd ..
           zip -r WineKit.ipa Payload
           
