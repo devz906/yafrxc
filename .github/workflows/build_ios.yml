@@ -9,29 +9,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Reassemble Engine
+      - name: Clean and Reassemble
         run: |
+          # Move to resources and ensure NO loose wine folder exists
           cd Shell/Sources/WineKit/Resources/
+          rm -rf wine
+          # Stitch the parts
           cat wine_parts.* > wine_engine.zip
           unzip -q wine_engine.zip
+          # IMPORTANT: Rename the unzipped folder to 'engine' to avoid Info.plist conflicts
+          mv wine engine
           rm wine_parts.* wine_engine.zip
         
       - name: Build IPA
         run: |
           cd Shell
-          # Force the compiler to target iOS 15.0+ to fix the 'close()' error
           xcodebuild archive \
             -scheme WineKit \
             -destination "generic/platform=iOS" \
             -archivePath ../WineKit.xcarchive \
             IPHONEOS_DEPLOYMENT_TARGET=15.0 \
             CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_ENTITLEMENTS="" \
-            CODE_SIGNING_METHOD=manual
+            CODE_SIGNING_REQUIRED=NO
           
           mkdir -p ../Payload
-          # Search for the .app folder inside the archive and move it to Payload
           APP_PATH=$(find ../WineKit.xcarchive -name "*.app" -type d | head -n 1)
           cp -r "$APP_PATH" ../Payload/
           cd ..
