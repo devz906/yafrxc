@@ -1,0 +1,16 @@
+name: Build iPhone 16 Pro EXE Loader
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build IPA
+        run: |
+          echo "Building for A18 Pro..."
+          cd Shell
+          # This is where the Mac 'Welds' your engine to the UI
+          xcodebuild -project WineKit.xcodeproj -scheme WineKit -sdk iphoneos -configuration Release
