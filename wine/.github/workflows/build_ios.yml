@@ -1,0 +1,23 @@
+name: Build iPhone 16 Pro EXE Loader
+on: [push]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app
+        
+      - name: Inject UI Shell
+        run: |
+          git clone https://github.com/divadretlaw/WineKit.git Shell
+          cp -r wine/* Shell/Engine/
+          cp -r MoltenVK/* Shell/Frameworks/
+          
+      - name: Compile IPA
+        run: |
+          cd Shell
+          xcodebuild -project WineKit.xcodeproj -scheme WineKit -sdk iphoneos -configuration Release archive -archivePath ./build/WineKit.xcarchive
+          # This creates the app file for your A18 Pro

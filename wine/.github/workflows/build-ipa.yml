@@ -1,0 +1,37 @@
+name: Build iPhone GTA Tool
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup iOS App Structure
+        run: mkdir -p Payload/GTA_Tool.app
+          
+      - name: Reassemble All Assets
+        run: |
+          # Join engine parts (if they exist)
+          if [ -f gta_bundle_part_aa ]; then cat gta_bundle_part_* > gta_ios_bundle.tar.gz; fi
+          # Join asset parts
+          cat wine_assets_part_* > wine_arm64_assets.tar.gz
+          
+          # Extract into the App Bundle
+          if [ -f gta_ios_bundle.tar.gz ]; then tar -xzf gta_ios_bundle.tar.gz -C Payload/GTA_Tool.app/; fi
+          tar -xzf wine_arm64_assets.tar.gz -C Payload/GTA_Tool.app/
+          
+      - name: Permissions Fix
+        run: |
+          find Payload/GTA_Tool.app -name "box64" -exec chmod +x {} +
+          find Payload/GTA_Tool.app -name "wine64" -exec chmod +x {} +
+
+      - name: Package IPA
+        run: zip -r GTA_Tool_A18_Pro.ipa Payload
+          
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GTA-iPhone-IPA
+          path: GTA_Tool_A18_Pro.ipa

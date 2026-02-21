@@ -1,0 +1,28 @@
+name: Build iPhone 16 Pro EXE Loader
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+        
+      - name: Build IPA
+        run: |
+          cd Shell
+          # This command builds modern Swift Packages without needing a .xcodeproj
+          xcodebuild archive \
+            -scheme WineKit \
+            -destination "generic/platform=iOS" \
+            -archivePath ../WineKit.xcarchive \
+            CODE_SIGNING_ALLOWED=NO
+          
+          # This turns the build into a file for your phone
+          mkdir -p ../Payload
+          cp -r ../WineKit.xcarchive/Products/usr/local/lib/WineKit.framework ../Payload/
+          zip -r ../WineKit.ipa ../Payload
