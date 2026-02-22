@@ -1,0 +1,5 @@
+clang version 22.1.0-rc3 (https://github.com/llvm/llvm-project.git 8530a2cf135c6091438b92b3778d1f23bf77d905)
+Target: aarch64-w64-windows-gnu
+Thread model: posix
+InstalledDir: /opt/llvm-mingw/bin
+Configuration file: /opt/llvm-mingw/bin/aarch64-w64-windows-gnu.cfg

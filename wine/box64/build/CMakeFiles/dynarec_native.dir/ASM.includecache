@@ -1,0 +1,16 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/workspaces/yafrxc/wine/box64/src/dynarec/arm64/arm64_epilog.S
+
+/workspaces/yafrxc/wine/box64/src/dynarec/arm64/arm64_lock.S
+
+/workspaces/yafrxc/wine/box64/src/dynarec/arm64/arm64_next.S
+
+/workspaces/yafrxc/wine/box64/src/dynarec/arm64/arm64_prolog.S
+

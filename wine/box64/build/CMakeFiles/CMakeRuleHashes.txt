@@ -1,0 +1,7 @@
+# Hashes of file build rules.
+eafe4ace01924a503765e255780da489 /workspaces/yafrxc/wine/box64/src/git_head.h
+419d1a3197bf567fba1f13136ee4f1f4 /workspaces/yafrxc/wine/box64/src/wrapped/generated/functions_list.txt
+9a630718e647db66c0af4391f063be4e CMakeFiles/WRAPPERS
+9a630718e647db66c0af4391f063be4e CMakeFiles/functions_list
+9a630718e647db66c0af4391f063be4e CMakeFiles/generate_git_head_target
+02ba6ee86495443ba88c982d0d103096 CMakeFiles/uninstall
