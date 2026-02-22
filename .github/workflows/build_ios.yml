@@ -19,8 +19,8 @@ jobs:
       - name: Build UI Shell
         run: |
           cd Shell
-          # Remove any old build artifacts that might be confusing the compiler
-          rm -rf .swiftpm/xcode
+          # Force Xcode to clear its brain
+          rm -rf ~/Library/Developer/Xcode/DerivedData/*
           xcodebuild archive \
             -scheme WineKit \
             -destination "generic/platform=iOS" \
@@ -33,16 +33,12 @@ jobs:
       - name: Final App Assembly
         run: |
           mkdir -p Payload
-          # Explicitly find the .app inside the local folder
           APP_PATH=$(find Shell/WineKit.xcarchive -name "*.app" -type d | head -n 1)
           if [ -z "$APP_PATH" ]; then exit 1; fi
-          
           cp -r "$APP_PATH" Payload/
           APP_NAME=$(basename "$APP_PATH")
-          
           mkdir -p "Payload/$APP_NAME/wine"
           cp -r ../FINAL_ENGINE_INJECTION/* "Payload/$APP_NAME/wine/"
-          
           zip -r WineKit.ipa Payload
           
       - name: Upload A18 Pro IPA
