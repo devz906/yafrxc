@@ -1,6 +1,10 @@
 import SwiftUI
 import Foundation
 
+// Tell Swift that this function exists in our C file
+@_silgen_name("trigger_jit_bridge")
+func trigger_jit_bridge()
+
 public struct ContentView: View {
     @State private var logOutput = "A18 Pro [JIT-Link Mode] Ready...\n"
     @State private var isBooting = false
@@ -19,18 +23,13 @@ public struct ContentView: View {
     func spawnWine() {
         let winePath = Bundle.main.bundlePath + "/Frameworks/wine"
         
-        // --- THE JIT TRIGGER (For Amethyst-MeloNX.js) ---
         logOutput += "Triggering JIT Breakpoint 0xf00d...\n"
         #if !targetEnvironment(simulator)
-        var trigger: Int = 0
-        asm volatile("mov x16, #1; brk #0xf00d" : "=r" (trigger) : : "x16")
+        trigger_jit_bridge()
         #endif
-        // -----------------------------------------------
 
         var pid: pid_t = 0
         let args = ["wine", "winecfg"]
-        
-        // FIXED: Using $0 to correctly map the arguments
         let argv: [UnsafeMutablePointer<CChar>?] = args.map { strdup($0) } + [nil]
         
         logOutput += "Spawning process...\n"
@@ -43,7 +42,6 @@ public struct ContentView: View {
             logOutput += "SPAWN ERROR: \(errorMsg) (Code: \(result))\n"
         }
         
-        // Cleanup memory
         for ptr in argv { if let p = ptr { free(p) } }
     }
 }
