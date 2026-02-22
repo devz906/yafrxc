@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "Shell",
-    platforms: [.iOS(.v18)],
+    platforms: [.iOS("18.0")],
     products: [
         .library(name: "WindowsFileKit", targets: ["WindowsFileKit"]),
         .library(name: "WineKit", targets: ["WineKit"])
