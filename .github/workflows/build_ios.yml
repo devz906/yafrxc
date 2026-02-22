@@ -18,23 +18,31 @@ jobs:
       - name: Build Shell
         run: |
           cd Shell
-          # We use xcodebuild but point it directly at the Package to generate the Scheme
+          # Force Xcode to treat the Package as a Project
           xcodebuild build \
-            -scheme WineKit \
+            -scheme Shell \
             -destination "generic/platform=iOS" \
             -configuration Release \
             -derivedDataPath ./build \
-            IPHONEOS_DEPLOYMENT_TARGET=18.0 \
             CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO
+            CODE_SIGNING_REQUIRED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
           
       - name: Final App Assembly
         run: |
           mkdir -p Payload
+          # Find the .app inside the build folder
           APP_PATH=$(find Shell/build -name "*.app" -type d | head -n 1)
+          
+          if [ -z "$APP_PATH" ]; then
+            echo "Searching deeper for the app..."
+            APP_PATH=$(find Shell/build -name "WineKit" -type d | grep ".app" | head -n 1)
+          fi
+
           cp -r "$APP_PATH" Payload/
           APP_NAME=$(basename "$APP_PATH")
           
+          # Inject the 700MB Engine
           mkdir -p "Payload/$APP_NAME/wine"
           cp -r ../FINAL_ENGINE_INJECTION/* "Payload/$APP_NAME/wine/"
           
