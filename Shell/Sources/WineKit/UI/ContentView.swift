@@ -1,68 +1,85 @@
 import SwiftUI
 
 public struct ContentView: View {
-    @State private var status = "A18 Pro Ready"
-    @State private var logOutput = ""
+    @State private var logOutput = "A18 Pro [JIT ENABLED] Standby...\n"
+    @State private var isBooting = false
     
     public init() {}
 
     public var body: some View {
         VStack(spacing: 20) {
-            Image(systemName: "bolt.fill")
-                .font(.system(size: 60))
-                .foregroundColor(.yellow)
-            
-            Text("WineKit A18 Pro")
-                .font(.title).bold()
-            
-            ScrollView {
-                Text(logOutput.isEmpty ? "Engine Output will appear here..." : logOutput)
-                    .font(.system(.caption, design: .monospaced))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .background(Color.black.opacity(0.8))
-                    .foregroundColor(.green)
-                    .cornerRadius(8)
+            HStack {
+                Circle().fill(Color.green).frame(width: 10, height: 10)
+                Text("JIT ACTIVE").font(.caption).bold()
             }
-            .frame(height: 200)
+            
+            Text("WineKit Terminal").font(.headline)
+            
+            ScrollViewReader { proxy in
+                ScrollView {
+                    Text(logOutput)
+                        .font(.system(.caption, design: .monospaced))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding()
+                        .background(Color.black)
+                        .foregroundColor(.green)
+                        .id("log")
+                }
+                .frame(height: 350)
+            }
 
             Button(action: {
-                launchEngine()
+                bootWineConfig()
             }) {
-                Text("BOOT WINE")
+                Text(isBooting ? "JIT EMULATING..." : "LAUNCH WINECFG")
                     .bold()
-                    .frame(width: 200, height: 50)
-                    .background(Color.blue)
+                    .frame(width: 250, height: 55)
+                    .background(isBooting ? Color.orange : Color.green)
                     .foregroundColor(.white)
-                    .cornerRadius(10)
+                    .cornerRadius(12)
+                    .shadow(radius: 5)
             }
         }
         .padding()
     }
     
-    func launchEngine() {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].path
+    func bootWineConfig() {
+        isBooting = true
         let winePath = Bundle.main.bundlePath + "/wine/wine"
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].path
         
-        status = "Booting..."
-        logOutput = "Setting WINEPREFIX to Documents...\n"
-        
-        // Environment Setup
-        // WINEPREFIX must be a writable folder
+        // Essential JIT Environment
         setenv("WINEPREFIX", docs + "/.wine", 1)
-        setenv("WINEDEBUG", "+all", 1) // This will show us EVERYTHING in the log
+        setenv("DYLD_LIBRARY_PATH", Bundle.main.bundlePath + "/wine/lib", 1)
+        setenv("WINEDEBUG", "-all", 1) // Disable logs for max speed
         
-        logOutput += "Executing: \(winePath)\n"
+        logOutput += "\n[JIT] Initializing Wine Config...\n"
         
-        // Using posix_spawn is complex in Swift, so we start with a simple check
-        if FileManager.default.isExecutableFile(atPath: winePath) {
-            logOutput += "Binary is EXECUTABLE. Attempting to spawn process...\n"
-            // Note: Without JIT, this might hang for 30s as it creates the prefix
-        } else {
-            logOutput += "ERROR: Binary exists but lacks EXECUTE permissions.\n"
-            logOutput += "Fixing permissions...\n"
-            let res = chmod(winePath, 0o755)
-            logOutput += "chmod result: \(res)\n"
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: winePath)
+        // 'winecfg' is the classic test for Wine environments
+        task.arguments = ["winecfg"] 
+        
+        let outputPipe = Pipe()
+        task.standardOutput = outputPipe
+        task.standardError = outputPipe
+        
+        // This handler lets us see output in real-time without freezing the UI
+        outputPipe.fileHandleForReading.readabilityHandler = { handle in
+            let data = handle.availableData
+            if let line = String(data: data, encoding: .utf8) {
+                DispatchQueue.main.async {
+                    self.logOutput += line
+                }
+            }
+        }
+        
+        do {
+            try task.run()
+            logOutput += "[JIT] Process Spawned! Monitoring thread...\n"
+        } catch {
+            logOutput += "JIT BOOT ERROR: \(error.localizedDescription)\n"
+            isBooting = false
         }
     }
 }
