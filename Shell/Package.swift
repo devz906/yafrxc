@@ -9,7 +9,20 @@ let package = Package(
         .library(name: "WineKit", targets: ["WineKit"])
     ],
     targets: [
-        .target(name: "WindowsFileKit"),
-        .target(name: "WineKit", dependencies: ["WindowsFileKit"])
+        .target(
+            name: "WindowsFileKit",
+            path: "Sources/WindowsFileKit"
+        ),
+        .target(
+            name: "WineKit",
+            dependencies: ["WindowsFileKit"],
+            path: "Sources/WineKit",
+            linkerSettings: [
+                .linkedFramework("Metal"),
+                .linkedFramework("MetalKit"),
+                .linkedFramework("QuartzCore"),
+                .linkedFramework("UIKit")
+            ]
+        )
     ]
 )

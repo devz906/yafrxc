@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Reassemble Engine (Safe Zone)
+      - name: Reassemble Engine
         run: |
           mkdir -p ../FINAL_ENGINE_INJECTION
           cat EngineParts/wine_parts.* > wine_engine.zip
@@ -19,8 +19,8 @@ jobs:
       - name: Build Bare-Metal Shell
         run: |
           cd Shell
-          # Wipe DerivedData locally in the runner to kill the bad bundle accessor
-          rm -rf ~/Library/Developer/Xcode/DerivedData/*
+          # Force a clean of the local SwiftPM cache
+          rm -rf .swiftpm/xcode
           
           xcodebuild archive \
             -scheme WineKit \
@@ -28,6 +28,7 @@ jobs:
             -archivePath ../WineKit.xcarchive \
             IPHONEOS_DEPLOYMENT_TARGET=18.0 \
             SWIFT_OPTIMIZATION_LEVEL="-Onone" \
+            OTHER_LDFLAGS="-objc" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
           
@@ -38,7 +39,6 @@ jobs:
           cp -r "$APP_PATH" Payload/
           APP_NAME=$(basename "$APP_PATH")
           
-          # MANUALLY create the wine folder inside the .app bundle
           mkdir -p "Payload/$APP_NAME/wine"
           cp -r ../FINAL_ENGINE_INJECTION/* "Payload/$APP_NAME/wine/"
           
