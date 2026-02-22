@@ -5,76 +5,63 @@ import Foundation
 func trigger_jit_bridge()
 
 public struct ContentView: View {
-    @State private var log = "A18 Pro: Ready\n"
+    @State private var log = "A18 Pro Deep Scan\n"
     
     public var body: some View {
         VStack(spacing: 15) {
-            Text("WineKit").font(.title).bold()
+            Text("WineKit Explorer").font(.title).bold()
             ScrollView {
                 Text(log).font(.system(.caption, design: .monospaced))
                     .frame(maxWidth: .infinity, alignment: .leading)
-            }.background(Color.black).foregroundColor(.green).frame(height: 300).cornerRadius(10)
+            }.background(Color.black).foregroundColor(.green).frame(height: 350).cornerRadius(10)
 
             HStack {
-                Button("FIX PERMS") { fixPermissions() }
-                    .buttonStyle(.bordered)
-                
-                Button("SCAN & RUN") { launchFromDocuments() }
-                    .buttonStyle(.borderedProminent)
+                Button("LIST ALL FILES") { listFiles() }.buttonStyle(.bordered)
+                Button("FIX & RUN") { autoLaunch() }.buttonStyle(.borderedProminent)
             }
-            
-            Text("Drop 'wine' folder in Files -> WineKit").font(.caption2).foregroundColor(.gray)
         }.padding()
     }
 
-    func fixPermissions() {
+    func listFiles() {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let enumerator = FileManager.default.enumerator(at: docs, includingPropertiesForKeys: nil)
-        log += "Unlocking binaries...\n"
-        
-        while let fileURL = enumerator?.nextObject() as? URL {
-            let path = fileURL.path
-            if path.contains("/bin/") || path.contains("/loader/") || fileURL.lastPathComponent == "wine" {
-                try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: path)
-            }
+        log += "--- Folder Contents ---\n"
+        let contents = (try? FileManager.default.subpathsOfDirectory(atPath: docs.path)) ?? []
+        for item in contents.prefix(20) { // Show first 20 files
+            log += "\(item)\n"
         }
-        log += "✅ Permissions Reset!\n"
+        log += "... (and more)\n"
     }
 
-    func launchFromDocuments() {
+    func autoLaunch() {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let fm = FileManager.default
         
+        // Let's look for ANYTHING that could be the Wine loader
         let enumerator = fm.enumerator(at: docs, includingPropertiesForKeys: nil)
-        var wineBin: String? = nil
+        var bestCandidate: String? = nil
         
         while let fileURL = enumerator?.nextObject() as? URL {
-            if fileURL.lastPathComponent == "wine" && !fileURL.hasDirectoryPath {
-                wineBin = fileURL.path
+            let name = fileURL.lastPathComponent
+            // If it's wine, wine64, or just a binary in a /bin folder
+            if (name == "wine" || name == "wine64" || name == "wine-preloader") && !fileURL.hasDirectoryPath {
+                bestCandidate = fileURL.path
                 break
             }
         }
 
-        guard let target = wineBin else {
-            log += "❌ ERROR: 'wine' not found.\n"
+        guard let target = bestCandidate else {
+            log += "❌ STILL NO WINE! Found 'config' but that's not a binary.\n"
+            log += "Looking for 'bin/wine' or 'loader/wine'...\n"
             return
         }
 
-        log += "✅ Target: \(target)\n"
+        log += "✅ TARGET FOUND: \(target)\n"
+        try? fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: target)
         trigger_jit_bridge()
         
-        let engineRoot = URL(fileURLWithPath: target).deletingLastPathComponent().deletingLastPathComponent().path
-        
         var pid: pid_t = 0
-        let env = [
-            "DYLD_LIBRARY_PATH=\(engineRoot)/lib:\(docs.path)/wine/libs:\(docs.path)/wine/extra_files",
-            "WINEPREFIX=\(docs.path)/.wine",
-            "PATH=\(engineRoot)/bin:\(engineRoot)/loader:/usr/bin:/bin"
-        ]
-        var envp = env.map { strdup($0) } + [nil]
         var argv = [strdup(target), strdup("winecfg"), nil]
-        
-        let result = posix_spawn(&pid, target, nil, nil, &argv, &envp)
-        log += result == 0 ? "🚀 PID: \(pid)\n" : "❌ Error: \(result)\n"
+        let result = posix_spawn(&pid, target, nil, nil, &argv, nil)
+        log += result == 0 ? "🚀 RUNNING! PID: \(pid)\n" : "❌ SPAWN ERROR: \(result)\n"
     }
 }
