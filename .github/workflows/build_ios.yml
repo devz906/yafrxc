@@ -11,22 +11,26 @@ jobs:
       
       - name: Assemble Mega-Engine
         run: |
-          mkdir -p ./engine_temp
+          # 1. Use a unique name for the staging area to avoid conflicts
+          rm -rf ./staging_area
+          mkdir -p ./staging_area
           
-          # 1. Wine Core
-          cat EngineParts/wine_parts.* > wine_engine.zip
-          unzip -q wine_engine.zip -d ./engine_temp
-          
-          # 2. Copy the ENTIRE wine folder (Box64/MoltenVK/DLLs)
-          # This is where the missing 600MB lives
-          if [ -d "wine" ]; then
-            cp -RP wine/* ./engine_temp/
+          # 2. Reassemble Wine Core parts (762MB)
+          if ls EngineParts/wine_parts.* 1> /dev/null 2>&1; then
+            cat EngineParts/wine_parts.* > wine_engine.zip
+            unzip -q wine_engine.zip -d ./staging_area
           fi
           
-          # 3. Copy extra Frameworks
-          cp Shell/Frameworks/libMoltenVK.a ./engine_temp/ 2>/dev/null || true
+          # 3. Copy the 'wine' source folder (Box64/MoltenVK/DLLs) 
+          # We use a trailing slash to copy CONTENTS, not the folder itself
+          if [ -d "wine" ]; then
+            cp -RP wine/. ./staging_area/
+          fi
           
-          chmod -R +x ./engine_temp/
+          # 4. Copy extra Frameworks
+          cp Shell/Frameworks/libMoltenVK.a ./staging_area/ 2>/dev/null || true
+          
+          chmod -R +x ./staging_area/
         
       - name: Compile JIT Bridge
         run: |
@@ -39,15 +43,19 @@ jobs:
       - name: Final App Assembly
         run: |
           rm -rf Payload WineKit.ipa
-          mkdir -p Payload/WineKit.app/Frameworks/wine
+          mkdir -p Payload/WineKit.app/Frameworks/wine_files
+          
+          # Move the compiled Swift binary
           cp Shell/Sources/WineKit/WineKit Payload/WineKit.app/WineKit
-          cp -RP ./engine_temp/* Payload/WineKit.app/Frameworks/wine/
+          
+          # Move everything from staging to the app
+          cp -RP ./staging_area/. Payload/WineKit.app/Frameworks/wine_files/
           
           # SIZE CHECK
           PAYLOAD_SIZE=$(du -sm Payload | cut -f1)
           echo "FINAL SIZE: $PAYLOAD_SIZE MB"
           
-          # FAIL IF TOO SMALL (Under 1GB)
+          # 1GB Fail-safe
           if [ "$PAYLOAD_SIZE" -lt 1000 ]; then
             echo "❌ ERROR: IPA is only $PAYLOAD_SIZE MB. Still missing parts!"
             exit 1
