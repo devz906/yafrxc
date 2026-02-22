@@ -14,69 +14,54 @@ jobs:
           mkdir -p ./engine_temp
           cat EngineParts/wine_parts.* > wine_engine.zip
           unzip -q wine_engine.zip -d ./engine_temp
-          echo "Structure check:"
-          ls ./engine_temp
         
-      - name: Force Compilation (Raw Swiftc)
+      - name: Compile JIT Bridge & Shell
         run: |
           cd Shell/Sources/WineKit
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
-          swiftc *.swift UI/*.swift \
+          
+          # 1. Compile C Bridge to an ARM64 Object File
+          clang -target arm64-apple-ios17.0 -isysroot "$SDK_PATH" -c jit_trigger.c -o jit_trigger.o
+          
+          # 2. Compile Swift files and LINK the C object file
+          # We use -import-objc-header to let Swift "see" the C function
+          echo "void trigger_jit_bridge(void);" > bridging.h
+          
+          swiftc *.swift UI/*.swift jit_trigger.o \
             -target arm64-apple-ios17.0 \
             -sdk "$SDK_PATH" \
+            -import-objc-header bridging.h \
             -O -o WineKit_Binary
           
       - name: Final App Assembly
         run: |
-          # 1. Start fresh
           rm -rf Payload
           mkdir -p Payload/WineKit.app/Frameworks
           mkdir -p Payload/WineKit.app/wine
           
-          # 2. Copy Shell Binary
           cp Shell/Sources/WineKit/WineKit_Binary Payload/WineKit.app/WineKit
-          
-          # 3. Copy Engine (using -R to handle directories)
           cp -R ./engine_temp/* Payload/WineKit.app/wine/
           
-          # 4. Specific Frameworks fix (Copying the main wine entry point)
-          if [ -d "./engine_temp/wine" ]; then
-             cp -R ./engine_temp/wine Payload/WineKit.app/Frameworks/
-          else
-             cp ./engine_temp/wine Payload/WineKit.app/Frameworks/ || true
-          fi
-          
-          # 5. Create Info.plist
+          # Create Info.plist
           cat <<EOP > Payload/WineKit.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>CFBundleExecutable</key>
-              <string>WineKit</string>
-              <key>CFBundleIdentifier</key>
-              <string>com.yafrxc.WineKit</string>
-              <key>CFBundleName</key>
-              <string>WineKit</string>
-              <key>CFBundlePackageType</key>
-              <string>APPL</string>
-              <key>CFBundleShortVersionString</key>
-              <string>1.0</string>
-              <key>LSRequiresIPhoneOS</key>
-              <true/>
-              <key>MinimumOSVersion</key>
-              <string>17.0</string>
-          </dict>
-          </plist>
+          <plist version="1.0"><dict>
+              <key>CFBundleExecutable</key><string>WineKit</string>
+              <key>CFBundleIdentifier</key><string>com.yafrxc.WineKit</string>
+              <key>CFBundleName</key><string>WineKit</string>
+              <key>CFBundlePackageType</key><string>APPL</string>
+              <key>CFBundleShortVersionString</key><string>1.0</string>
+              <key>LSRequiresIPhoneOS</key><true/>
+              <key>MinimumOSVersion</key><string>17.0</string>
+          </dict></plist>
           EOP
           
-          # 6. Final Permissions & Zip
           chmod -R 777 Payload
           zip -r WineKit.ipa Payload
           
       - name: Upload JIT IPA
         uses: actions/upload-artifact@v4
         with:
-          name: WineKit-JIT-Ready
+          name: WineKit-Final
           path: WineKit.ipa
-          if-no-files-found: error
