@@ -16,29 +16,36 @@ jobs:
           unzip -q wine_engine.zip -d ../FINAL_ENGINE_INJECTION
           find ../FINAL_ENGINE_INJECTION -name "Info.plist" -delete
         
-      - name: Build UI Shell
+      - name: Build Minimalist Shell
         run: |
           cd Shell
-          # Wipe DerivedData to prevent "Ghost" file errors
-          rm -rf ~/Library/Developer/Xcode/DerivedData/*
+          # Building the Package directly since the Scheme is gone
           xcodebuild archive \
+            -package Shell \
             -scheme WineKit \
             -destination "generic/platform=iOS" \
             -archivePath ./WineKit.xcarchive \
             IPHONEOS_DEPLOYMENT_TARGET=18.0 \
-            SWIFT_OPTIMIZATION_LEVEL="-Onone" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
           
       - name: Final App Assembly
         run: |
           mkdir -p Payload
+          # Locate the .app inside the freshly built archive
           APP_PATH=$(find Shell/WineKit.xcarchive -name "*.app" -type d | head -n 1)
-          if [ -z "$APP_PATH" ]; then exit 1; fi
+          if [ -z "$APP_PATH" ]; then 
+            echo "ERROR: App bundle not found in archive"
+            exit 1
+          fi
+          
           cp -r "$APP_PATH" Payload/
           APP_NAME=$(basename "$APP_PATH")
+          
+          # Inject the 700MB Engine
           mkdir -p "Payload/$APP_NAME/wine"
           cp -r ../FINAL_ENGINE_INJECTION/* "Payload/$APP_NAME/wine/"
+          
           zip -r WineKit.ipa Payload
           
       - name: Upload A18 Pro IPA
