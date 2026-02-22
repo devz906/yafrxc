@@ -14,7 +14,6 @@ jobs:
           mkdir -p ./engine_temp
           cat EngineParts/wine_parts.* > wine_engine.zip
           unzip -q wine_engine.zip -d ./engine_temp
-          # FORCE EXECUTE PERMISSIONS
           chmod -R +x ./engine_temp/
         
       - name: Compile JIT Bridge & Shell
@@ -31,18 +30,17 @@ jobs:
           
       - name: Final App Assembly
         run: |
-          rm -rf Payload
+          # 1. Cleanup and Create Structure
+          rm -rf Payload WineKit.ipa
           mkdir -p Payload/WineKit.app/Frameworks/wine
           
+          # 2. Move Binary
           cp Shell/Sources/WineKit/WineKit_Binary Payload/WineKit.app/WineKit
-          # Copy EVERYTHING from engine_temp into the Frameworks/wine folder
-          cp -R ./engine_temp/* Payload/WineKit.app/Frameworks/wine/
           
-          # Fix permissions one last time inside the bundle
-          chmod +x Payload/WineKit.app/WineKit
-          find Payload/WineKit.app/Frameworks/wine -type f -name "wine*" -exec chmod +x {} +
+          # 3. Copy Engine (Using -a to preserve links/attributes)
+          cp -a ./engine_temp/. Payload/WineKit.app/Frameworks/wine/
           
-          # Info.plist
+          # 4. Generate Info.plist
           cat <<EOP > Payload/WineKit.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -57,4 +55,17 @@ jobs:
           </dict></plist>
           EOP
           
-          zip -r WineKit.ipa Payload
+          # 5. Permission Enforcement
+          chmod +x Payload/WineKit.app/WineKit
+          find Payload/WineKit.app/Frameworks/wine -name "wine*" -exec chmod +x {} +
+          
+          # 6. Verify and Zip
+          du -sh Payload # This shows how big the folder is before zipping
+          zip -ry WineKit.ipa Payload
+          
+      - name: Upload JIT IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: WineKit-JIT-Ready
+          path: WineKit.ipa
+          if-no-files-found: error
