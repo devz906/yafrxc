@@ -20,21 +20,28 @@ jobs:
         run: |
           cd Shell/Sources/WineKit
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
+          
+          # Compile C Bridge
           clang -target arm64-apple-ios17.0 -isysroot "$SDK_PATH" -c jit_trigger.c -o jit_trigger.o
+          
           echo "void trigger_jit_bridge(void);" > bridging.h
+          
+          # Compile Swift
           swiftc *.swift UI/*.swift jit_trigger.o \
             -target arm64-apple-ios17.0 \
             -sdk "$SDK_PATH" \
             -import-objc-header bridging.h \
-            -O -o WineKit_Binary
+            -O -o WineKit
           
       - name: Final App Assembly
         run: |
           rm -rf Payload WineKit.ipa
           mkdir -p Payload/WineKit.app/Frameworks/wine
           
-          cp Shell/Sources/WineKit/WineKit_Binary Payload/WineKit.app/WineKit
-          # Use -R -P to preserve symbolic links exactly as they are
+          # Move Binary
+          cp Shell/Sources/WineKit/WineKit Payload/WineKit.app/WineKit
+          
+          # Copy Engine
           cp -RP ./engine_temp/* Payload/WineKit.app/Frameworks/wine/
           
           # Info.plist
@@ -52,16 +59,18 @@ jobs:
           </dict></plist>
           EOP
           
+          # Fixed Permission Check for macOS find
           chmod +x Payload/WineKit.app/WineKit
-          # Ensure all binaries are executable
-          find Payload/WineKit.app/Frameworks/wine -type f -executable -exec chmod +x {} +
+          find Payload/WineKit.app/Frameworks/wine -type f \( -name "wine*" -or -name "*.so" \) -exec chmod +x {} +
           
-          # CRITICAL: Use 'ditto' instead of 'zip' for the first pass. 
-          # It's Apple's own tool that preserves every single iOS-specific detail.
+          # Verify Size
+          du -sh Payload
+          
+          # Use ditto to preserve symlinks
           ditto -c -k --sequesterRsrc --keepParent Payload WineKit.ipa
           
       - name: Upload JIT IPA
         uses: actions/upload-artifact@v4
         with:
-          name: WineKit-JIT-Ready
+          name: WineKit-JIT-Final
           path: WineKit.ipa
