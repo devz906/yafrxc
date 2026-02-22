@@ -5,51 +5,50 @@ import Foundation
 func trigger_jit_bridge()
 
 public struct ContentView: View {
-    @State private var log = "Deep Engine Analysis...\n"
+    @State private var log = "Titan Box64 Engine: Ready\n"
     
     public var body: some View {
-        VStack {
-            Text("A18 Pro Titan Diagnoser").font(.headline)
+        VStack(spacing: 20) {
+            Text("Titan Box64").font(.largeTitle).bold().foregroundColor(.orange)
             ScrollView {
                 Text(log).font(.system(.caption, design: .monospaced))
                     .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .background(Color.black).foregroundColor(.cyan)
-            .frame(height: 450).cornerRadius(10)
+            }.background(Color.black).foregroundColor(.green).frame(height: 350).cornerRadius(10)
 
-            Button("FIND THE BOSS BINARY") {
-                analyzeFiles()
-            }.buttonStyle(.borderedProminent)
+            Button("LAUNCH ENGINE") { launchEngine() }
+                .buttonStyle(.borderedProminent).tint(.orange).controlSize(.large)
         }.padding()
     }
 
-    func analyzeFiles() {
+    func launchEngine() {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let fm = FileManager.default
-        log = "Scanning: \(docs.path)\n\n"
         
-        let enumerator = fm.enumerator(at: docs, includingPropertiesForKeys: [.fileSizeKey])
+        // Target the cooked path
+        let winePath = docs.appendingPathComponent("bin/wine").path
         
-        var foundPotential = false
-        while let url = enumerator?.nextObject() as? URL {
-            if url.hasDirectoryPath { continue }
-            
-            let name = url.lastPathComponent
-            let attr = try? fm.attributesOfItem(atPath: url.path)
-            let size = attr?[.size] as? UInt64 ?? 0
-            let sizeMB = Double(size) / 1024.0 / 1024.0
-            
-            // Logic: Wine loaders are usually small (under 5MB), Box64 is larger.
-            if sizeMB > 0.05 {
-                let formattedSize = String(format: "%.2f MB", sizeMB)
-                log += "Found: \(name) (\(formattedSize))\n"
-                log += "Path: \(url.path.replacingOccurrences(of: docs.path, with: ""))\n\n"
-                foundPotential = true
-            }
+        if !fm.fileExists(atPath: winePath) {
+            log += "❌ ENGINE RAW: bin/wine not found.\n"
+            log += "Did you unzip the Cooked Engine into the WineKit folder?\n"
+            return
         }
+
+        log += "✅ Chef Found. Triggering JIT...\n"
+        trigger_jit_bridge()
         
-        if !foundPotential {
-            log += "❌ EMPTY DISK: No files found over 50KB."
-        }
+        let engineRoot = docs.path
+        var pid: pid_t = 0
+        let env = [
+            "DYLD_LIBRARY_PATH=\(engineRoot)/lib:\(engineRoot)/wine/libs:\(engineRoot)/wine/box64/build",
+            "WINEPREFIX=\(docs.path)/.wine",
+            "PATH=\(engineRoot)/bin:/usr/bin:/bin",
+            "BOX64_LOG=1"
+        ]
+        
+        var envp = env.map { strdup($0) } + [nil]
+        var argv = [strdup(winePath), strdup("winecfg"), nil]
+        
+        let result = posix_spawn(&pid, winePath, nil, nil, &argv, &envp)
+        log += result == 0 ? "🚀 ENGINE LIVE! PID: \(pid)\n" : "❌ IGNITION FAILURE: \(result)\n"
     }
 }

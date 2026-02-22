@@ -1,4 +1,4 @@
-name: Build Split WineKit
+name: Build Titan Box64 Engine
 on:
   push:
     branches: [ main ]
@@ -8,52 +8,73 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Assemble Titan Engine
+      - name: Cook the Box64 Engine
         run: |
-          mkdir -p titan_dist
-          cat EngineParts/wine_parts.* > wine_core.zip
-          unzip -q wine_core.zip -d titan_dist/
-          if [ -d "wine" ]; then ditto wine titan_dist/wine/; fi
-          cd titan_dist && zip -r ../TitanEngine_790MB.zip . && cd ..
+          # 1. Clear the counter
+          rm -rf engine_cooked staging
+          mkdir -p engine_cooked/bin engine_cooked/lib
           
-      - name: Upload Engine Only
+          # 2. Extract Wine Core (The Body)
+          echo "Unpacking Wine Core..."
+          cat EngineParts/wine_parts.* > wine_raw.zip
+          unzip -q wine_raw.zip -d staging/
+          
+          # 3. Find the Chef (Wine) and Server
+          WINE_EXE=$(find staging -name "wine" -type f | head -n 1)
+          SERVER_EXE=$(find staging -name "wineserver" -type f | head -n 1)
+          
+          if [ -z "$WINE_EXE" ]; then echo "❌ NO WINE BINARY!"; exit 1; fi
+          
+          cp "$WINE_EXE" engine_cooked/bin/wine
+          cp "$SERVER_EXE" engine_cooked/bin/wineserver
+          ditto staging/lib engine_cooked/lib/
+          
+          # 4. Inject Box64 & Custom Files (The Flavor)
+          echo "Merging Box64 and Custom Libs..."
+          if [ -d "wine" ]; then
+            # Move your custom 'wine' folder contents into the cooked engine
+            ditto wine engine_cooked/
+          fi
+          
+          # 5. Permission Check (Pre-cooking the execution bit)
+          chmod +x engine_cooked/bin/*
+          
+          # 6. Final Box64 Branding
+          cd engine_cooked && zip -r ../Titan-Box64-Engine.zip . && cd ..
+          
+      - name: Upload Engine
         uses: actions/upload-artifact@v4
         with:
-          name: TitanEngine-Body
-          path: TitanEngine_790MB.zip
+          name: Titan-Box64-Body
+          path: Titan-Box64-Engine.zip
 
   build_ui:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build Tiny IPA
+      - name: Build Titan UI
         run: |
           cd Shell/Sources/WineKit
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
           clang -target arm64-apple-ios17.0 -isysroot "$SDK_PATH" -c jit_trigger.c -o jit_trigger.o
           echo "void trigger_jit_bridge(void);" > bridging.h
           swiftc *.swift UI/*.swift jit_trigger.o -target arm64-apple-ios17.0 -sdk "$SDK_PATH" -import-objc-header bridging.h -O -o WineKit
-          
           mkdir -p Payload/WineKit.app
           cp WineKit Payload/WineKit.app/WineKit
-          
           cat <<EOP > Payload/WineKit.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0"><dict>
               <key>CFBundleExecutable</key><string>WineKit</string>
               <key>CFBundleIdentifier</key><string>com.yafrxc.WineKit</string>
-              <key>CFBundleName</key><string>WineKit</string>
+              <key>CFBundleName</key><string>TitanBox64</string>
               <key>CFBundlePackageType</key><string>APPL</string>
-              <key>CFBundleShortVersionString</key><string>1.0</string>
-              <key>LSRequiresIPhoneOS</key><true/>
               <key>UIFileSharingEnabled</key><true/>
           </dict></plist>
           EOP
-          ditto -c -k --sequesterRsrc --keepParent Payload WineKit.ipa
-          
-      - name: Upload UI Only
+          ditto -c -k --sequesterRsrc --keepParent Payload TitanBox64.ipa
+      - name: Upload UI
         uses: actions/upload-artifact@v4
         with:
-          name: WineKit-UI-Head
-          path: WineKit.ipa
+          name: TitanBox64-UI-Head
+          path: TitanBox64.ipa
