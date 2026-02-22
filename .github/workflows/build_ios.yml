@@ -9,13 +9,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Prep Workspace
-        run: |
-          # Ensure the Resources folder is totally empty so the compiler stays happy
-          mkdir -p Shell/Sources/WineKit/Resources/
-          rm -rf Shell/Sources/WineKit/Resources/*
-          touch Shell/Sources/WineKit/Resources/.gitkeep
-        
       - name: Reassemble Engine (Safe Zone)
         run: |
           mkdir -p ../FINAL_ENGINE_INJECTION
@@ -26,6 +19,7 @@ jobs:
       - name: Build UI Shell
         run: |
           cd Shell
+          # We keep the dummy 'wine' folder here so the Swift code compiles
           xcodebuild archive \
             -scheme WineKit \
             -destination "generic/platform=iOS" \
@@ -41,8 +35,11 @@ jobs:
           APP_PATH=$(find WineKit.xcarchive -name "*.app" -type d | head -n 1)
           cp -r "$APP_PATH" Payload/
           APP_NAME=$(basename "$APP_PATH")
-          # Inject engine into the 'engine_data' subfolder
-          cp -r ../FINAL_ENGINE_INJECTION "Payload/$APP_NAME/engine_data"
+          
+          # SWAP: Remove the dummy 'wine' and inject the real 700MB engine
+          rm -rf "Payload/$APP_NAME/wine"
+          cp -r ../FINAL_ENGINE_INJECTION "Payload/$APP_NAME/wine"
+          
           zip -r WineKit.ipa Payload
           
       - name: Upload A18 Pro IPA
