@@ -19,18 +19,16 @@ jobs:
       - name: Build Bare-Metal Shell
         run: |
           cd Shell
-          # Force a clean of the local SwiftPM cache
-          rm -rf .swiftpm/xcode
-          
+          # The -quiet flag actually HIDES the error. We're removing it and adding better flags.
           xcodebuild archive \
             -scheme WineKit \
             -destination "generic/platform=iOS" \
             -archivePath ../WineKit.xcarchive \
             IPHONEOS_DEPLOYMENT_TARGET=18.0 \
             SWIFT_OPTIMIZATION_LEVEL="-Onone" \
-            OTHER_LDFLAGS="-objc" \
+            COMPILER_INDEX_STORE_ENABLE=NO \
             CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO
+            CODE_SIGNING_REQUIRED=NO | xcpretty || (echo "BUILD FAILED - SEE ABOVE" && exit 1)
           
       - name: Final App Assembly
         run: |
