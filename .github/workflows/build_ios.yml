@@ -29,22 +29,41 @@ jobs:
           
       - name: Final App Assembly
         run: |
-          mkdir -p Payload
-          # The New Search: Look specifically in the Products/Release-iphoneos folder
-          APP_PATH=$(find Shell/build/Build/Products/Release-iphoneos -name "*.app" -type d -maxdepth 2 | head -n 1)
+          # 1. Create a dummy .app structure because xcodebuild-package sometimes only outputs the binary
+          mkdir -p Payload/WineKit.app
           
-          if [ -z "$APP_PATH" ]; then
-            echo "Direct path failed, searching everywhere in build folder..."
-            APP_PATH=$(find Shell/build -name "*.app" -type d | head -n 1)
-          fi
-
-          echo "Found prize at: $APP_PATH"
-          cp -r "$APP_PATH" Payload/
-          APP_NAME=$(basename "$APP_PATH")
+          # 2. Find the compiled binary and move it into the bundle
+          BINARY_PATH=$(find Shell/build -type f -perm +111 -name "WineKit" | head -n 1)
+          echo "Found Binary at: $BINARY_PATH"
+          cp "$BINARY_PATH" Payload/WineKit.app/WineKit
           
-          # Inject the 700MB Engine
-          mkdir -p "Payload/$APP_NAME/wine"
-          cp -r ../FINAL_ENGINE_INJECTION/* "Payload/$APP_NAME/wine/"
+          # 3. Create a minimal Info.plist so iOS recognizes it
+          cat <<EOP > Payload/WineKit.app/Info.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>WineKit</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.yafrxc.WineKit</string>
+              <key>CFBundleName</key>
+              <string>WineKit</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0</string>
+              <key>LSRequiresIPhoneOS</key>
+              <true/>
+              <key>MinimumOSVersion</key>
+              <string>18.0</string>
+          </dict>
+          </plist>
+          EOP
+          
+          # 4. Inject the 700MB Engine
+          mkdir -p "Payload/WineKit.app/wine"
+          cp -r ../FINAL_ENGINE_INJECTION/* "Payload/WineKit.app/wine/"
           
           zip -r WineKit.ipa Payload
           
