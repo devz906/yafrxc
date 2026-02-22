@@ -5,33 +5,46 @@ import Foundation
 func trigger_jit_bridge()
 
 public struct ContentView: View {
-    @State private var log = "A18 Pro Titan: Manual Engine Mode\n"
+    @State private var log = "A18 Pro: Ready\n"
     
     public var body: some View {
-        VStack(spacing: 20) {
-            Text("WineKit").font(.largeTitle).bold()
-            
+        VStack(spacing: 15) {
+            Text("WineKit").font(.title).bold()
             ScrollView {
                 Text(log).font(.system(.caption, design: .monospaced))
                     .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .background(Color.black).foregroundColor(.green)
-            .frame(height: 350).cornerRadius(10)
+            }.background(Color.black).foregroundColor(.green).frame(height: 300).cornerRadius(10)
 
-            Button("DETECT & START") {
-                launchFromDocs()
+            HStack {
+                Button("FIX PERMS") { fixPermissions() }
+                    .buttonStyle(.bordered)
+                
+                Button("SCAN & RUN") { launchFromDocuments() }
+                    .buttonStyle(.borderedProminent)
             }
-            .buttonStyle(.borderedProminent).controlSize(.large)
             
-            Text("Download the Engine ZIP and extract it into the WineKit folder via Files app.").font(.footnote).foregroundColor(.secondary).multilineTextAlignment(.center)
+            Text("Drop 'wine' folder in Files -> WineKit").font(.caption2).foregroundColor(.gray)
         }.padding()
     }
 
-    func launchFromDocs() {
-        let fm = FileManager.default
-        let docs = fm.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    func fixPermissions() {
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let enumerator = FileManager.default.enumerator(at: docs, includingPropertiesForKeys: nil)
+        log += "Unlocking binaries...\n"
         
-        // This searches for the 'wine' binary anywhere in your documents
+        while let fileURL = enumerator?.nextObject() as? URL {
+            let path = fileURL.path
+            if path.contains("/bin/") || path.contains("/loader/") || fileURL.lastPathComponent == "wine" {
+                try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: path)
+            }
+        }
+        log += "✅ Permissions Reset!\n"
+    }
+
+    func launchFromDocuments() {
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fm = FileManager.default
+        
         let enumerator = fm.enumerator(at: docs, includingPropertiesForKeys: nil)
         var wineBin: String? = nil
         
@@ -43,30 +56,25 @@ public struct ContentView: View {
         }
 
         guard let target = wineBin else {
-            log += "❌ ERROR: No 'wine' binary found in Documents.\n"
+            log += "❌ ERROR: 'wine' not found.\n"
             return
         }
 
-        log += "✅ FOUND: \(target)\n"
-        try? fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: target)
-        
-        log += "Triggering JIT...\n"
+        log += "✅ Target: \(target)\n"
         trigger_jit_bridge()
         
         let engineRoot = URL(fileURLWithPath: target).deletingLastPathComponent().deletingLastPathComponent().path
         
         var pid: pid_t = 0
         let env = [
-            "DYLD_LIBRARY_PATH=\(engineRoot)/lib:\(docs.path)/wine/libs:\(docs.path)/wine/box64/build",
+            "DYLD_LIBRARY_PATH=\(engineRoot)/lib:\(docs.path)/wine/libs:\(docs.path)/wine/extra_files",
             "WINEPREFIX=\(docs.path)/.wine",
             "PATH=\(engineRoot)/bin:\(engineRoot)/loader:/usr/bin:/bin"
         ]
-        
         var envp = env.map { strdup($0) } + [nil]
         var argv = [strdup(target), strdup("winecfg"), nil]
         
-        log += "Spawning...\n"
         let result = posix_spawn(&pid, target, nil, nil, &argv, &envp)
-        log += result == 0 ? "🚀 SUCCESS! PID: \(pid)\n" : "❌ FAILED: \(result)\n"
+        log += result == 0 ? "🚀 PID: \(pid)\n" : "❌ Error: \(result)\n"
     }
 }

@@ -9,27 +9,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Build Engine Body (The 1.6GB ZIP)
+      - name: Build Engine Body (The Full ZIP)
         run: |
-          # 1. Setup clean workspace
-          rm -rf engine_dist staging_core
-          mkdir -p engine_dist staging_core
+          rm -rf engine_final staging_core
+          mkdir -p engine_final staging_core
           
-          # 2. Reassemble and Unzip Wine Core
+          # 1. Unpack Core
           cat EngineParts/wine_parts.* > wine_core.zip
           unzip -q wine_core.zip -d staging_core/
           
-          # 3. Merge Core and Custom Repo Files using ditto
-          # This merges everything into engine_dist safely
-          ditto staging_core engine_dist/
+          # 2. Merge all into engine_final
+          ditto staging_core engine_final/
           if [ -d "wine" ]; then
-            ditto wine engine_dist/wine/
+            ditto wine engine_final/wine/
           fi
           
-          # 4. Final Zip
-          cd engine_dist && zip -r ../TitanEngine.zip . && cd ..
+          # 3. Create ONE flat zip (no zips inside zips)
+          cd engine_final && zip -r ../TitanEngine.zip . && cd ..
         
-      - name: Build UI Head (The 5MB IPA)
+      - name: Build UI Head
         run: |
           cd Shell/Sources/WineKit
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
@@ -54,10 +52,9 @@ jobs:
               <key>LSSupportsOpeningDocumentsInPlace</key><true/>
           </dict></plist>
           EOP
-          
           ditto -c -k --sequesterRsrc --keepParent Payload WineKit.ipa
           
-      - name: Upload Artifacts
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: WineKit-Dual-Package
