@@ -17,6 +17,7 @@ let package = Package(
             name: "WineKit",
             dependencies: ["WindowsFileKit"],
             path: "Sources/WineKit",
+            sources: ["FlatDomain", "Logger.swift", "Model", "Wine", "TaskManager"], 
             resources: [.process("Resources")]
         )
     ]
