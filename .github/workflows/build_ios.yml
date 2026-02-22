@@ -19,7 +19,7 @@ jobs:
       - name: Build UI Shell
         run: |
           cd Shell
-          # Force Xcode to clear its brain
+          # Wipe DerivedData to prevent "Ghost" file errors
           rm -rf ~/Library/Developer/Xcode/DerivedData/*
           xcodebuild archive \
             -scheme WineKit \
