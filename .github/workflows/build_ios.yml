@@ -9,24 +9,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Reassemble All Engines (Wine + Box64 + GTA)
+      - name: Reassemble Engine + GTA Parts
         run: |
           mkdir -p ./engine_temp
           
-          # 1. Merge Wine Parts
+          # 1. Merge the 762MB Wine Core
           if ls EngineParts/wine_parts.* 1> /dev/null 2>&1; then
             cat EngineParts/wine_parts.* > wine_engine.zip
             unzip -q wine_engine.zip -d ./engine_temp
           fi
           
-          # 2. Merge Box64/GTA Parts (if they follow a similar pattern)
-          # This catches anything ending in .aa, .ab, etc. in the root or folders
-          find . -name "*.a[a-z]" -exec cat {} + > full_engine.zip 2>/dev/null || true
-          
-          # If full_engine exists, unzip it too
-          if [ -f full_engine.zip ]; then
-            unzip -o -q full_engine.zip -d ./engine_temp
+          # 2. Merge the GTA Engine Parts (Box64/MoltenVK)
+          # Assuming they are in the 'wine' folder as you mentioned
+          if [ -d "wine" ]; then
+             cp -RP wine/* ./engine_temp/
           fi
+          
+          # 3. Double check for any loose box64/moltenvk files
+          find . -name "box64*" -exec cp {} ./engine_temp/ \; 2>/dev/null || true
+          find . -name "*MoltenVK*" -exec cp {} ./engine_temp/ \; 2>/dev/null || true
           
           chmod -R +x ./engine_temp/
         
@@ -46,13 +47,13 @@ jobs:
         run: |
           rm -rf Payload WineKit.ipa
           mkdir -p Payload/WineKit.app/Frameworks/wine
-          cp Shell/Sources/WineKit/WineKit Payload/WineKit.app/WineKit
           
+          cp Shell/Sources/WineKit/WineKit Payload/WineKit.app/WineKit
           cp -RP ./engine_temp/* Payload/WineKit.app/Frameworks/wine/
           
-          # Check total size - WE WANT 1.4GB+
-          PAYLOAD_SIZE=$(du -sm Payload | cut -f1)
-          echo "TOTAL PAYLOAD SIZE: $PAYLOAD_SIZE MB"
+          # This line is the truth-teller:
+          echo "--- CHECKING FINAL SIZE ---"
+          du -sh Payload
           
           # Info.plist
           cat <<EOP > Payload/WineKit.app/Info.plist
@@ -69,7 +70,9 @@ jobs:
           </dict></plist>
           EOP
           
-          find Payload/WineKit.app/Frameworks/wine -type f \( -name "wine*" -or -name "*.so" -or -name "box64*" \) -exec chmod +x {} +
+          # Fix executable permissions for the iPhone
+          find Payload/WineKit.app -type f \( -name "wine*" -or -name "box64*" -or -name "*.so" -or -name "*.dylib" \) -exec chmod +x {} +
+          
           ditto -c -k --sequesterRsrc --keepParent Payload WineKit.ipa
           
       - name: Upload JIT IPA
