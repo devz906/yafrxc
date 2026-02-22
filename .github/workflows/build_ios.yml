@@ -1,4 +1,4 @@
-name: Build iPhone 16 Pro EXE Loader
+name: Build Split-Engine WineKit
 on:
   push:
     branches: [ main ]
@@ -9,16 +9,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Create Engine Archive
+      - name: Prepare Engine Body (The Zip)
         run: |
-          mkdir -p staging
+          mkdir -p engine_body
+          # Reassemble the parts
           cat EngineParts/wine_parts.* > wine_core.zip
-          unzip -q wine_core.zip -d staging/
-          if [ -d "wine" ]; then ditto wine staging/extra_files; fi
-          # Zip it all into one big file for the app to 'extract' to Documents
-          cd staging && zip -r ../engine.zip . && cd ..
+          unzip -q wine_core.zip -d engine_body/
+          # Add the extra wine folder contents
+          if [ -d "wine" ]; then ditto wine engine_body/extra_files; fi
+          # Create the final Body Zip
+          cd engine_body && zip -r ../engine_data.zip . && cd ..
         
-      - name: Compile Swift Shell
+      - name: Compile Swift Head (The App)
         run: |
           cd Shell/Sources/WineKit
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
@@ -26,13 +28,13 @@ jobs:
           echo "void trigger_jit_bridge(void);" > bridging.h
           swiftc *.swift UI/*.swift jit_trigger.o -target arm64-apple-ios17.0 -sdk "$SDK_PATH" -import-objc-header bridging.h -O -o WineKit
           
-      - name: Final Assembly
+      - name: Assembly
         run: |
           rm -rf Payload WineKit.ipa
           mkdir -p Payload/WineKit.app
           cp Shell/Sources/WineKit/WineKit Payload/WineKit.app/WineKit
-          # Put the big zip inside the app resources
-          cp engine.zip Payload/WineKit.app/engine.bundle
+          # Put the engine zip into the App Resources folder
+          cp engine_data.zip Payload/WineKit.app/engine_data.zip
           
           cat <<EOP > Payload/WineKit.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
@@ -45,7 +47,6 @@ jobs:
               <key>CFBundleShortVersionString</key><string>1.0</string>
               <key>LSRequiresIPhoneOS</key><true/>
               <key>UIFileSharingEnabled</key><true/>
-              <key>LSSupportsOpeningDocumentsInPlace</key><true/>
           </dict></plist>
           EOP
           
@@ -54,5 +55,5 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: WineKit-Universal
+          name: WineKit-Split-Build
           path: WineKit.ipa
