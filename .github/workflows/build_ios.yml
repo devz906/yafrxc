@@ -19,33 +19,45 @@ jobs:
       - name: Build Minimalist Shell
         run: |
           cd Shell
-          # Direct build of the package to avoid Scheme/Archive errors
-          xcodebuild build \
-            -scheme WineKit \
-            -destination "generic/platform=iOS" \
-            -configuration Release \
-            -derivedDataPath ./build \
-            IPHONEOS_DEPLOYMENT_TARGET=18.0 \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO
+          # Use Swift PM directly for the A18 Pro binary
+          swift build -c release --triple arm64-apple-ios18.0-macabi
+          
+          # Create the .app structure manually
+          mkdir -p build/WineKit.app
+          cp .build/arm64-apple-macosx/release/WineKit build/WineKit.app/WineKit
+          
+          # Create a basic Info.plist so iOS knows what this is
+          cat <<EOP > build/WineKit.app/Info.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>WineKit</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.yafrxc.WineKit</string>
+              <key>CFBundleName</key>
+              <string>WineKit</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0</string>
+              <key>LSRequiresIPhoneOS</key>
+              <true/>
+              <key>MinimumOSVersion</key>
+              <string>18.0</string>
+          </dict>
+          </plist>
+          EOP
           
       - name: Final App Assembly
         run: |
           mkdir -p Payload
-          # Locate the built .app product in the derived data
-          APP_PATH=$(find Shell/build -name "*.app" -type d | head -n 1)
+          cp -r Shell/build/WineKit.app Payload/
           
-          if [ -z "$APP_PATH" ]; then 
-            echo "ERROR: App bundle not found! Build might have failed silently."
-            exit 1
-          fi
-          
-          cp -r "$APP_PATH" Payload/
-          APP_NAME=$(basename "$APP_PATH")
-          
-          # Inject the 700MB Engine into the app bundle
-          mkdir -p "Payload/$APP_NAME/wine"
-          cp -r ../FINAL_ENGINE_INJECTION/* "Payload/$APP_NAME/wine/"
+          # Inject the Engine
+          mkdir -p "Payload/WineKit.app/wine"
+          cp -r ../FINAL_ENGINE_INJECTION/* "Payload/WineKit.app/wine/"
           
           zip -r WineKit.ipa Payload
           
