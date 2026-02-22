@@ -2,55 +2,53 @@ import SwiftUI
 
 public struct ContentView: View {
     @State private var status = "Ready for A18 Pro"
-    @State private var isRunning = false
+    @State private var foundPath = ""
     
     public init() {}
 
     public var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: isRunning ? "cpu.fill" : "terminal.fill")
-                .font(.system(size: 80))
-                .foregroundColor(isRunning ? .green : .blue)
-            
-            Text("WineKit Engine")
-                .font(.largeTitle).bold()
-            
-            Text(status)
-                .multilineTextAlignment(.center)
+        ScrollView {
+            VStack(spacing: 20) {
+                Image(systemName: "folder.fill.badge.search")
+                    .font(.system(size: 80))
+                    .foregroundColor(.blue)
+                
+                Text("WineKit Explorer")
+                    .font(.largeTitle).bold()
+                
+                Text(status)
+                    .font(.caption)
+                    .monospaced()
+                    .padding()
+                    .background(Color.black.opacity(0.1))
+                
+                Button("SCAN & LAUNCH") {
+                    scanForWine()
+                }
                 .padding()
-
-            Button(action: {
-                triggerWine()
-            }) {
-                Text(isRunning ? "RUNNING..." : "LAUNCH WINE")
-                    .bold()
-                    .frame(width: 200, height: 50)
-                    .background(isRunning ? Color.gray : Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(10)
             }
-            .disabled(isRunning)
+            .padding()
         }
     }
     
-    func triggerWine() {
-        isRunning = true
-        status = "Accessing /wine directory..."
+    func scanForWine() {
+        let wineRoot = Bundle.main.bundlePath + "/wine"
+        status = "Scanning root: \(wineRoot)..."
         
-        // Find the path to the engine we injected
-        let winePath = Bundle.main.bundlePath + "/wine/bin/wine"
-        let exists = FileManager.default.fileExists(atPath: winePath)
-        
-        if exists {
-            status = "Engine Found. Attempting Boot..."
-            // In a real sideloaded environment, we use posix_spawn or NSTask
-            // For now, let's verify the environment can see the files
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                self.status = "Success: Engine detected at \(winePath). Verification complete."
+        let fileManager = FileManager.default
+        // Deep search for any file named "wine"
+        if let enumerator = fileManager.enumerator(atPath: wineRoot) {
+            for case let file as String in enumerator {
+                if file.hasSuffix("/bin/wine") || file == "bin/wine" || file == "wine" {
+                    foundPath = wineRoot + "/" + file
+                    status = "FOUND IT!\nPath: \(foundPath)"
+                    return
+                }
             }
-        } else {
-            status = "Error: Wine binary not found at /wine/bin/wine"
-            isRunning = false
         }
+        status = "Still can't see it. The /wine folder contains: \((try? fileManager.contentsOfDirectory(atPath: wineRoot)) ?? [])"
     }
 }
