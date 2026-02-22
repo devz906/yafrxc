@@ -14,19 +14,15 @@ jobs:
           mkdir -p ./engine_temp
           cat EngineParts/wine_parts.* > wine_engine.zip
           unzip -q wine_engine.zip -d ./engine_temp
+          # FORCE EXECUTE PERMISSIONS
+          chmod -R +x ./engine_temp/
         
       - name: Compile JIT Bridge & Shell
         run: |
           cd Shell/Sources/WineKit
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
-          
-          # 1. Compile C Bridge to an ARM64 Object File
           clang -target arm64-apple-ios17.0 -isysroot "$SDK_PATH" -c jit_trigger.c -o jit_trigger.o
-          
-          # 2. Compile Swift files and LINK the C object file
-          # We use -import-objc-header to let Swift "see" the C function
           echo "void trigger_jit_bridge(void);" > bridging.h
-          
           swiftc *.swift UI/*.swift jit_trigger.o \
             -target arm64-apple-ios17.0 \
             -sdk "$SDK_PATH" \
@@ -36,13 +32,17 @@ jobs:
       - name: Final App Assembly
         run: |
           rm -rf Payload
-          mkdir -p Payload/WineKit.app/Frameworks
-          mkdir -p Payload/WineKit.app/wine
+          mkdir -p Payload/WineKit.app/Frameworks/wine
           
           cp Shell/Sources/WineKit/WineKit_Binary Payload/WineKit.app/WineKit
-          cp -R ./engine_temp/* Payload/WineKit.app/wine/
+          # Copy EVERYTHING from engine_temp into the Frameworks/wine folder
+          cp -R ./engine_temp/* Payload/WineKit.app/Frameworks/wine/
           
-          # Create Info.plist
+          # Fix permissions one last time inside the bundle
+          chmod +x Payload/WineKit.app/WineKit
+          find Payload/WineKit.app/Frameworks/wine -type f -name "wine*" -exec chmod +x {} +
+          
+          # Info.plist
           cat <<EOP > Payload/WineKit.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -57,11 +57,4 @@ jobs:
           </dict></plist>
           EOP
           
-          chmod -R 777 Payload
           zip -r WineKit.ipa Payload
-          
-      - name: Upload JIT IPA
-        uses: actions/upload-artifact@v4
-        with:
-          name: WineKit-Final
-          path: WineKit.ipa
