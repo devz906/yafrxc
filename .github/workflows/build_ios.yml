@@ -19,8 +19,6 @@ jobs:
         run: |
           cd Shell/Sources/WineKit
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
-          
-          # Compile all swift files directly into a single binary named 'WineKit'
           swiftc *.swift UI/*.swift \
             -target arm64-apple-ios17.0 \
             -sdk "$SDK_PATH" \
@@ -31,11 +29,18 @@ jobs:
         run: |
           mkdir -p Payload/WineKit.app
           
-          # Move the binary we just made
+          # 1. Prepare Binary
           cp Shell/Sources/WineKit/WineKit_Binary Payload/WineKit.app/WineKit
-          chmod +x Payload/WineKit.app/WineKit
+          chmod 777 Payload/WineKit.app/WineKit
           
-          # Create Info.plist
+          # 2. Prepare Engine and Fix Permissions
+          mkdir -p "Payload/WineKit.app/wine"
+          cp -r ../FINAL_ENGINE_INJECTION/* "Payload/WineKit.app/wine/"
+          
+          # CRITICAL: Fix permissions for EVERY binary in the wine folder
+          find Payload/WineKit.app/wine -type f -exec chmod 777 {} +
+          
+          # 3. Create Info.plist
           cat <<EOP > Payload/WineKit.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -58,10 +63,6 @@ jobs:
           </dict>
           </plist>
           EOP
-          
-          # Inject Engine
-          mkdir -p "Payload/WineKit.app/wine"
-          cp -r ../FINAL_ENGINE_INJECTION/* "Payload/WineKit.app/wine/"
           
           zip -r WineKit.ipa Payload
           
