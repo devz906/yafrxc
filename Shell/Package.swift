@@ -3,17 +3,21 @@ import PackageDescription
 
 let package = Package(
     name: "Shell",
-    platforms: [.iOS("18.0")],
+    platforms: [.iOS("17.0")],
     products: [
         .library(name: "WindowsFileKit", targets: ["WindowsFileKit"]),
         .library(name: "WineKit", targets: ["WineKit"])
     ],
     targets: [
-        .target(name: "WindowsFileKit", path: "Sources/WindowsFileKit"),
         .target(
-            name: "WineKit", 
+            name: "WindowsFileKit",
+            path: "Sources/WindowsFileKit"
+        ),
+        .target(
+            name: "WineKit",
             dependencies: ["WindowsFileKit"],
-            path: "Sources/WineKit"
+            path: "Sources/WineKit",
+            resources: [.process("Resources")]
         )
     ]
 )
