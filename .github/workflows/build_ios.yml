@@ -9,19 +9,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Reassemble Engine in Safe Harbor
+      - name: Reassemble Engine Outside Source
         run: |
-          # Stitch the parts in a separate folder that Xcode can't see
-          mkdir -p extracted_engine
+          # Extract to a folder at the ROOT, far away from the 'Shell' folder
+          mkdir -p ../EXTRACTED_ENGINE_DATA
           cat EngineParts/wine_parts.* > wine_engine.zip
-          unzip -q wine_engine.zip -d extracted_engine
-          # Remove Info.plist from engine to avoid Apple security conflicts
-          find extracted_engine -name "Info.plist" -delete
+          unzip -q wine_engine.zip -d ../EXTRACTED_ENGINE_DATA
+          # Delete the forbidden Info.plist files immediately
+          find ../EXTRACTED_ENGINE_DATA -name "Info.plist" -delete
         
-      - name: Build IPA
+      - name: Build UI Shell
         run: |
           cd Shell
-          # Build only the UI/Shell logic first (this will now be fast and clean)
+          # Build only the UI. Since the engine is currently in ../EXTRACTED_ENGINE_DATA,
+          # Xcode won't see it and won't throw Error 74.
           xcodebuild archive \
             -scheme WineKit \
             -destination "generic/platform=iOS" \
@@ -30,15 +31,18 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
           
-          mkdir -p ../Payload
-          APP_PATH=$(find ../WineKit.xcarchive -name "*.app" -type d | head -n 1)
-          cp -r "$APP_PATH" ../Payload/
+      - name: Manually Inject Engine & Wrap IPA
+        run: |
+          mkdir -p Payload
+          # Find the .app folder
+          APP_PATH=$(find WineKit.xcarchive -name "*.app" -type d | head -n 1)
+          cp -r "$APP_PATH" Payload/
           
-          # MANUAL INJECTION: Slide the engine data into the app bundle
-          # This bypasses the Resource Scanner entirely
-          cp -r ../extracted_engine "../Payload/$(basename "$APP_PATH")/engine_data"
+          # Inject the engine data into the .app bundle manually
+          APP_NAME=$(basename "$APP_PATH")
+          cp -r ../EXTRACTED_ENGINE_DATA "Payload/$APP_NAME/engine_data"
           
-          cd ..
+          # Zip it up
           zip -r WineKit.ipa Payload
           
       - name: Upload Artifact
