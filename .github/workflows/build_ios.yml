@@ -15,27 +15,27 @@ jobs:
           cat EngineParts/wine_parts.* > wine_engine.zip
           unzip -q wine_engine.zip -d ../FINAL_ENGINE_INJECTION
         
-      - name: Build Shell (Pure iOS)
+      - name: Build Shell (Debug Mode)
         run: |
           cd Shell
-          # Force the use of the iPhoneOS platform and SDK
-          # This prevents the 'Darwin' module from pulling in Mac headers
+          # Switching to Debug to avoid the -Owholemodule crash
           xcodebuild build \
             -scheme Shell \
             -destination "generic/platform=iOS" \
-            -configuration Release \
+            -configuration Debug \
             -derivedDataPath ./build \
             -sdk iphoneos \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            COMPILER_INDEX_STORE_ENABLE=NO
           
       - name: Final App Assembly
         run: |
           mkdir -p Payload/WineKit.app
           
-          # Find the binary in the xcodebuild output folder
-          BINARY_PATH=$(find Shell/build/Build/Products/Release-iphoneos -type f -perm +111 ! -name "*.plist" ! -name "*.bundle" | head -n 1)
+          # Find the binary in the Debug-iphoneos folder
+          BINARY_PATH=$(find Shell/build/Build/Products/Debug-iphoneos -type f -perm +111 ! -name "*.plist" ! -name "*.bundle" | head -n 1)
           
           echo "Found Binary at: $BINARY_PATH"
           cp "$BINARY_PATH" Payload/WineKit.app/WineKit
