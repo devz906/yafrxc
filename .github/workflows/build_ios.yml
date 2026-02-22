@@ -30,17 +30,14 @@ jobs:
           
       - name: Final App Assembly
         run: |
-          # 1. Cleanup and Create Structure
           rm -rf Payload WineKit.ipa
           mkdir -p Payload/WineKit.app/Frameworks/wine
           
-          # 2. Move Binary
           cp Shell/Sources/WineKit/WineKit_Binary Payload/WineKit.app/WineKit
+          # Use -R -P to preserve symbolic links exactly as they are
+          cp -RP ./engine_temp/* Payload/WineKit.app/Frameworks/wine/
           
-          # 3. Copy Engine (Using -a to preserve links/attributes)
-          cp -a ./engine_temp/. Payload/WineKit.app/Frameworks/wine/
-          
-          # 4. Generate Info.plist
+          # Info.plist
           cat <<EOP > Payload/WineKit.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -55,17 +52,16 @@ jobs:
           </dict></plist>
           EOP
           
-          # 5. Permission Enforcement
           chmod +x Payload/WineKit.app/WineKit
-          find Payload/WineKit.app/Frameworks/wine -name "wine*" -exec chmod +x {} +
+          # Ensure all binaries are executable
+          find Payload/WineKit.app/Frameworks/wine -type f -executable -exec chmod +x {} +
           
-          # 6. Verify and Zip
-          du -sh Payload # This shows how big the folder is before zipping
-          zip -ry WineKit.ipa Payload
+          # CRITICAL: Use 'ditto' instead of 'zip' for the first pass. 
+          # It's Apple's own tool that preserves every single iOS-specific detail.
+          ditto -c -k --sequesterRsrc --keepParent Payload WineKit.ipa
           
       - name: Upload JIT IPA
         uses: actions/upload-artifact@v4
         with:
           name: WineKit-JIT-Ready
           path: WineKit.ipa
-          if-no-files-found: error
