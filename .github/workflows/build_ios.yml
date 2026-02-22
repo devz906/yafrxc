@@ -14,17 +14,18 @@ jobs:
           mkdir -p ../FINAL_ENGINE_INJECTION
           cat EngineParts/wine_parts.* > wine_engine.zip
           unzip -q wine_engine.zip -d ../FINAL_ENGINE_INJECTION
+          # Remove forbidden files
           find ../FINAL_ENGINE_INJECTION -name "Info.plist" -delete
         
       - name: Build UI Shell
         run: |
           cd Shell
-          # We keep the dummy 'wine' folder here so the Swift code compiles
+          # Target iOS 18.0 for iOS 26.x compatibility and modern API support
           xcodebuild archive \
             -scheme WineKit \
             -destination "generic/platform=iOS" \
             -archivePath ../WineKit.xcarchive \
-            IPHONEOS_DEPLOYMENT_TARGET=15.0 \
+            IPHONEOS_DEPLOYMENT_TARGET=18.0 \
             SWIFT_OPTIMIZATION_LEVEL="-Onone" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
@@ -36,9 +37,9 @@ jobs:
           cp -r "$APP_PATH" Payload/
           APP_NAME=$(basename "$APP_PATH")
           
-          # SWAP: Remove the dummy 'wine' and inject the real 700MB engine
-          rm -rf "Payload/$APP_NAME/wine"
-          cp -r ../FINAL_ENGINE_INJECTION "Payload/$APP_NAME/wine"
+          # Inject the engine into the bundle manually
+          mkdir -p "Payload/$APP_NAME/wine"
+          cp -r ../FINAL_ENGINE_INJECTION/* "Payload/$APP_NAME/wine/"
           
           zip -r WineKit.ipa Payload
           
