@@ -22,7 +22,7 @@ public struct ContentView: View {
         let bundlePath = Bundle.main.bundlePath
         let engineRoot = bundlePath + "/Frameworks/engine"
         
-        // Use the absolute path to the wine binary
+        // Surgical path to the binary
         let winePath = engineRoot + "/bin/wine"
         
         logOutput += "Triggering JIT...\n"
@@ -31,35 +31,39 @@ public struct ContentView: View {
         #endif
 
         var pid: pid_t = 0
-        let args = [winePath, "winecfg"] // Use full path as first arg
+        let args = [winePath, "winecfg"]
         let argv: [UnsafeMutablePointer<CChar>?] = args.map { strdup($0) } + [nil]
         
+        // FIXED SWIFT SYNTAX FOR ENVIRONMENT
         var env = ProcessInfo.processInfo.environment
-        // DYLD_LIBRARY_PATH is restricted on iOS; we must be careful
         env["DYLD_LIBRARY_PATH"] = "\(engineRoot)/lib:\(engineRoot)/extra_files:\(bundlePath)/Frameworks"
         env["WINEPREFIX"] = NSHomeDirectory() + "/Documents/.wine"
         env["PATH"] = "\(engineRoot)/bin:/usr/bin:/bin"
-        env["WINEDEBUG"] = "err+all" // Force wine to tell us what's wrong
+        env["WINEDEBUG"] = "err+all"
         
-        let envp: [UnsafeMutablePointer<CChar>?] = env.map { strdup("$0.key=$0.value") } + [nil]
+        let envp: [UnsafeMutablePointer<CChar>?] = env.map { (key, value) in 
+            strdup("\(key)=\(value)") 
+        } + [nil]
         
-        // Create a pipe to catch the error message
+        // Catch Errors
         let pipe = Pipe()
         var fileActions: posix_spawn_file_actions_t?
         posix_spawn_file_actions_init(&fileActions)
         posix_spawn_file_actions_adddup2(&fileActions, pipe.fileHandleForWriting.fileDescriptor, STDERR_FILENO)
         
-        logOutput += "Attempting spawn...\n"
+        logOutput += "Checking: \(winePath)\n"
+        if !FileManager.default.fileExists(atPath: winePath) {
+            logOutput += "❌ ERROR: Wine binary not found at path!\n"
+            return
+        }
+
         let result = posix_spawn(&pid, winePath, &fileActions, nil, argv, envp)
         
         if result == 0 {
             logOutput += "🚀 SUCCESS! PID: \(pid)\n"
-            // Start reading the pipe in background
-            DispatchQueue.global().async {
-                let data = pipe.fileHandleForReading.readData(ofLength: 1024)
-                if let output = String(data: data, encoding: .utf8) {
-                    DispatchQueue.main.async { self.logOutput += "WINE ERROR: \(output)\n" }
-                }
+            let data = pipe.fileHandleForReading.readData(ofLength: 512)
+            if let output = String(data: data, encoding: .utf8), !output.isEmpty {
+                logOutput += "LOG: \(output)\n"
             }
         } else {
             let errorMsg = String(cString: strerror(result))
