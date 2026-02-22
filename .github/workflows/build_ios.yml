@@ -18,22 +18,22 @@ jobs:
       - name: Build Shell
         run: |
           cd Shell
-          # Building with the Package name as the scheme
           xcodebuild build \
             -scheme Shell \
             -destination "generic/platform=iOS" \
-            -configuration Release \
+            -configuration Debug \
             -derivedDataPath ./build \
             CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO
+            CODE_SIGNING_REQUIRED=NO \
+            COMPILER_INDEX_STORE_ENABLE=NO
           
       - name: Final App Assembly
         run: |
           mkdir -p Payload/WineKit.app
           
-          # Find the binary - it's often named 'WineKit' or 'Shell'
+          # Find the binary - looking in Debug-iphoneos now
           echo "Hunting for executable binary..."
-          BINARY_PATH=$(find Shell/build/Build/Products/Release-iphoneos -type f -perm +111 ! -name "*.plist" ! -name "*.bundle" | head -n 1)
+          BINARY_PATH=$(find Shell/build/Build/Products/Debug-iphoneos -type f -perm +111 ! -name "*.plist" ! -name "*.bundle" | head -n 1)
           
           if [ -z "$BINARY_PATH" ]; then
              BINARY_PATH=$(find Shell/build -type f -perm +111 ! -path "*.app/*" | head -n 1)
@@ -61,7 +61,7 @@ jobs:
               <key>LSRequiresIPhoneOS</key>
               <true/>
               <key>MinimumOSVersion</key>
-              <string>18.0</string>
+              <string>17.0</string>
           </dict>
           </plist>
           EOP
