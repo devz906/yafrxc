@@ -9,33 +9,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Assemble Mega-Engine
+      - name: Create Engine Archive
         run: |
-          # 1. Clean Staging Area
-          rm -rf staging_area
-          mkdir -p staging_area
-          
-          # 2. Reassemble Wine Core (762MB)
-          if ls EngineParts/wine_parts.* 1> /dev/null 2>&1; then
-            cat EngineParts/wine_parts.* > wine_engine.zip
-            mkdir -p temp_core
-            unzip -q wine_engine.zip -d temp_core
-            # Use 'ditto' to merge the core into staging
-            ditto temp_core staging_area
-          fi
-          
-          # 3. Merge the 'wine' repo folder (Box64/MoltenVK/GTA)
-          # 'ditto' handles the "Operation not permitted" conflict safely
-          if [ -d "wine" ]; then
-            ditto wine staging_area/extra_files
-          fi
-          
-          # 4. Grab extra Frameworks
-          cp Shell/Frameworks/libMoltenVK.a ./staging_area/ 2>/dev/null || true
-          
-          chmod -R +x ./staging_area/
+          mkdir -p staging
+          cat EngineParts/wine_parts.* > wine_core.zip
+          unzip -q wine_core.zip -d staging/
+          if [ -d "wine" ]; then ditto wine staging/extra_files; fi
+          # Zip it all into one big file for the app to 'extract' to Documents
+          cd staging && zip -r ../engine.zip . && cd ..
         
-      - name: Compile JIT Bridge
+      - name: Compile Swift Shell
         run: |
           cd Shell/Sources/WineKit
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
@@ -43,27 +26,14 @@ jobs:
           echo "void trigger_jit_bridge(void);" > bridging.h
           swiftc *.swift UI/*.swift jit_trigger.o -target arm64-apple-ios17.0 -sdk "$SDK_PATH" -import-objc-header bridging.h -O -o WineKit
           
-      - name: Final App Assembly
+      - name: Final Assembly
         run: |
           rm -rf Payload WineKit.ipa
-          mkdir -p Payload/WineKit.app/Frameworks/engine
-          
-          # Move Swift binary
+          mkdir -p Payload/WineKit.app
           cp Shell/Sources/WineKit/WineKit Payload/WineKit.app/WineKit
+          # Put the big zip inside the app resources
+          cp engine.zip Payload/WineKit.app/engine.bundle
           
-          # Copy the combined engine (Core + Extra)
-          cp -RP ./staging_area/. Payload/WineKit.app/Frameworks/engine/
-          
-          # SIZE CHECK: We want to see 1.2GB - 1.5GB here
-          PAYLOAD_SIZE=$(du -sm Payload | cut -f1)
-          echo "--- FINAL BUNDLE SIZE: $PAYLOAD_SIZE MB ---"
-          
-          if [ "$PAYLOAD_SIZE" -lt 1000 ]; then
-            echo "❌ ERROR: Payload too small ($PAYLOAD_SIZE MB). Parts are missing!"
-            exit 1
-          fi
-          
-          # Info.plist
           cat <<EOP > Payload/WineKit.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -74,14 +44,15 @@ jobs:
               <key>CFBundlePackageType</key><string>APPL</string>
               <key>CFBundleShortVersionString</key><string>1.0</string>
               <key>LSRequiresIPhoneOS</key><true/>
+              <key>UIFileSharingEnabled</key><true/>
+              <key>LSSupportsOpeningDocumentsInPlace</key><true/>
           </dict></plist>
           EOP
           
-          find Payload/WineKit.app -type f \( -name "wine*" -or -name "box64*" -or -name "*.so" -or -name "*.dylib" \) -exec chmod +x {} +
           ditto -c -k --sequesterRsrc --keepParent Payload WineKit.ipa
           
-      - name: Upload JIT IPA
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: WineKit-JIT-Final
+          name: WineKit-Universal
           path: WineKit.ipa
