@@ -11,10 +11,12 @@ jobs:
       
       - name: Kill Broken Symlinks
         run: |
-          # This specifically fixes the 'ignoring broken symlink' errors in your log
-          find Shell/Sources/WineKit/Resources/ -type l -delete
-          # Completely clear the Resources folder before Xcode starts
-          rm -rf Shell/Sources/WineKit/Resources/*
+          # Create the directory if it's missing, then clean it
+          mkdir -p Shell/Sources/WineKit/Resources/
+          if [ -d "Shell/Sources/WineKit/Resources/" ]; then
+            find Shell/Sources/WineKit/Resources/ -type l -delete
+            rm -rf Shell/Sources/WineKit/Resources/*
+          fi
         
       - name: Reassemble Engine (Deep Safe Harbor)
         run: |
@@ -24,10 +26,9 @@ jobs:
           # Delete Info.plist to prevent Error 74
           find ../FINAL_ENGINE_INJECTION -name "Info.plist" -delete
         
-      - name: Build Bare-Metal Shell
+      - name: Build UI Shell
         run: |
           cd Shell
-          # We force -Onone to satisfy the indexer and speed up the A18 Pro build
           xcodebuild archive \
             -scheme WineKit \
             -destination "generic/platform=iOS" \
