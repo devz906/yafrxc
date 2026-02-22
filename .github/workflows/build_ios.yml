@@ -11,7 +11,6 @@ jobs:
       
       - name: Kill Broken Symlinks
         run: |
-          # Create the directory if it's missing, then clean it
           mkdir -p Shell/Sources/WineKit/Resources/
           if [ -d "Shell/Sources/WineKit/Resources/" ]; then
             find Shell/Sources/WineKit/Resources/ -type l -delete
@@ -23,16 +22,17 @@ jobs:
           mkdir -p ../FINAL_ENGINE_INJECTION
           cat EngineParts/wine_parts.* > wine_engine.zip
           unzip -q wine_engine.zip -d ../FINAL_ENGINE_INJECTION
-          # Delete Info.plist to prevent Error 74
           find ../FINAL_ENGINE_INJECTION -name "Info.plist" -delete
         
       - name: Build UI Shell
         run: |
           cd Shell
+          # The fix: Force the deployment target to iOS 15.0
           xcodebuild archive \
             -scheme WineKit \
             -destination "generic/platform=iOS" \
             -archivePath ../WineKit.xcarchive \
+            IPHONEOS_DEPLOYMENT_TARGET=15.0 \
             SWIFT_OPTIMIZATION_LEVEL="-Onone" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
@@ -43,7 +43,6 @@ jobs:
           APP_PATH=$(find WineKit.xcarchive -name "*.app" -type d | head -n 1)
           cp -r "$APP_PATH" Payload/
           APP_NAME=$(basename "$APP_PATH")
-          # Inject the massive engine into the folder where the Swift code expects it
           cp -r ../FINAL_ENGINE_INJECTION "Payload/$APP_NAME/engine_data"
           zip -r WineKit.ipa Payload
           
