@@ -19,31 +19,29 @@ jobs:
         run: |
           cd Shell
           xcodebuild build \
-            -scheme Shell \
+            -scheme WineKit \
             -destination "generic/platform=iOS" \
             -configuration Release \
             -derivedDataPath ./build \
             CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES
+            CODE_SIGNING_REQUIRED=NO
           
       - name: Final App Assembly
         run: |
           mkdir -p Payload/WineKit.app
           
-          # 1. Find ANY executable binary in the build folder (excluding object files)
-          # We look for a file that is executable and not a directory
-          BINARY_PATH=$(find Shell/build/Build/Products/Release-iphoneos -type f -maxdepth 1 -perm +111 | head -n 1)
+          # Find the binary - it should now be in the Release-iphoneos folder
+          BINARY_PATH=$(find Shell/build/Build/Products/Release-iphoneos -type f -maxdepth 2 ! -name "*.plist" ! -name "*.bundle" | head -n 1)
           
           if [ -z "$BINARY_PATH" ]; then
-            echo "Searching all of build folder for binary..."
-            BINARY_PATH=$(find Shell/build -type f -perm +111 -name "Shell" -o -name "WineKit" | head -n 1)
+            echo "Binary not found in products, searching entire build folder..."
+            BINARY_PATH=$(find Shell/build -type f -perm +111 ! -path "*.app/*" ! -path "*.framework/*" | head -n 1)
           fi
           
           echo "Found Binary at: $BINARY_PATH"
           cp "$BINARY_PATH" Payload/WineKit.app/WineKit
           
-          # 2. Create the Info.plist
+          # Create Info.plist
           cat <<EOP > Payload/WineKit.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -67,7 +65,6 @@ jobs:
           </plist>
           EOP
           
-          # 3. Inject the 700MB Engine
           mkdir -p "Payload/WineKit.app/wine"
           cp -r ../FINAL_ENGINE_INJECTION/* "Payload/WineKit.app/wine/"
           
