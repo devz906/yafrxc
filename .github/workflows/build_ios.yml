@@ -9,18 +9,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Build Engine ZIP (The Body)
+      - name: Build Engine Body (The 1.6GB ZIP)
         run: |
-          mkdir -p engine_dist
-          # Reassemble Wine Core
-          cat EngineParts/wine_parts.* > wine_core.zip
-          unzip -q wine_core.zip -d engine_dist/
-          # Merge the 'wine' folder (Box64/MoltenVK/GTA)
-          if [ -d "wine" ]; then ditto wine engine_dist/; fi
-          # Final Zip for manual upload
-          cd engine_dist && zip -r ../TitanEngine_1.6GB.zip . && cd ..
+          # 1. Setup clean workspace
+          rm -rf engine_dist staging_core
+          mkdir -p engine_dist staging_core
           
-      - name: Build WineKit IPA (The Head)
+          # 2. Reassemble and Unzip Wine Core
+          cat EngineParts/wine_parts.* > wine_core.zip
+          unzip -q wine_core.zip -d staging_core/
+          
+          # 3. Merge Core and Custom Repo Files using ditto
+          # This merges everything into engine_dist safely
+          ditto staging_core engine_dist/
+          if [ -d "wine" ]; then
+            ditto wine engine_dist/wine/
+          fi
+          
+          # 4. Final Zip
+          cd engine_dist && zip -r ../TitanEngine.zip . && cd ..
+        
+      - name: Build UI Head (The 5MB IPA)
         run: |
           cd Shell/Sources/WineKit
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
@@ -31,7 +40,6 @@ jobs:
           mkdir -p Payload/WineKit.app
           cp WineKit Payload/WineKit.app/WineKit
           
-          # Info.plist with File Sharing enabled
           cat <<EOP > Payload/WineKit.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -49,10 +57,10 @@ jobs:
           
           ditto -c -k --sequesterRsrc --keepParent Payload WineKit.ipa
           
-      - name: Upload Both Artifacts
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: WineKit-Complete-Package
+          name: WineKit-Dual-Package
           path: |
             WineKit.ipa
-            TitanEngine_1.6GB.zip
+            TitanEngine.zip
