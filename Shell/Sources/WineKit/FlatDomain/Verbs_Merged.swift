@@ -1,4 +1,322 @@
 //
+// Verbs+App.swift
+// WineKit
+// 
+// Source: https://github.com/Winetricks/winetricks
+//
+// Automatically generated on 1.3.2025.
+//
+
+import Foundation
+
+extension Winetricks {
+	/// Winetricks verbs from App.txt
+	public enum App: String, Hashable, Equatable, Codable, CaseIterable, CustomStringConvertible, Sendable {
+		/// 3M Cloud Library (3M Company, 2015)
+		case _3mLibrary = "3m_library"
+		/// 7-Zip 24.09 (Igor Pavlov, 2024)
+		case _7zip = "7zip"
+		/// Adobe Digital Editions 1.7 (Adobe, 2011)
+		case adobeDiged = "adobe_diged"
+		/// Adobe Digital Editions 4.5 (Adobe, 2015)
+		case adobeDiged4 = "adobe_diged4"
+		/// AutoHotKey (autohotkey.org, 2010)
+		case autohotkey = "autohotkey"
+		/// BusyBox FRP-4621-gf3c5e8bc3 (Ron Yorston / Busybox authors, 2021)
+		case busybox = "busybox"
+		/// CMake 2.8 (Kitware, 2013)
+		case cmake = "cmake"
+		/// Standard RGB color profile (Microsoft, 2005)
+		case colorprofile = "colorprofile"
+		/// MS ActiveX Control Pad (Microsoft, 1997)
+		case controlpad = "controlpad"
+		/// Control Spy 6  (Microsoft, 2005)
+		case controlspy = "controlspy"
+		/// Debug monitor (Mark Russinovich, 2019)
+		case dbgview = "dbgview"
+		/// Dependency Walker (Steve P. Miller, 2006)
+		case depends = "depends"
+		/// MS .NET 2.0 SDK (Microsoft, 2006)
+		case dotnet20sdk = "dotnet20sdk"
+		/// MS DirectX SDK, August 2006 (developers only) (Microsoft, 2006)
+		case dxsdkAug2006 = "dxsdk_aug2006"
+		/// MS DirectX SDK, June 2010 (developers only) (Microsoft, 2010)
+		case dxsdkJun2010 = "dxsdk_jun2010"
+		/// Window hooker to run fullscreen programs in window and much more... (ghotik, 2011)
+		case dxwnd = "dxwnd"
+		/// emu8086 (emu8086.com, 2015)
+		case emu8086 = "emu8086"
+		/// Lego Mindstorms EV3 Home Edition (Lego, 2014)
+		case ev3 = "ev3"
+		/// Firefox 51.0 (Mozilla, 2017)
+		case firefox = "firefox"
+		/// Font Xplorer 1.2.2 (Moon Software, 2001)
+		case fontxplorer = "fontxplorer"
+		/// foobar2000 v1.4 (Peter Pawlowski, 2018)
+		case foobar2000 = "foobar2000"
+		/// HTML Help Workshop (Microsoft, 2000)
+		case hhw = "hhw"
+		/// GNU Icecat 31.7.0 (GNU Foundation, 2015)
+		case iceweasel = "iceweasel"
+		/// Irfanview (Irfan Skiljan, 2016)
+		case irfanview = "irfanview"
+		/// Amazon Kindle (Amazon, 2017)
+		case kindle = "kindle"
+		/// Kobo e-book reader (Kobo, 2011)
+		case kobo = "kobo"
+		/// Minimalist GNU for Windows, including GCC for Windows (GNU, 2013)
+		case mingw = "mingw"
+		/// Mozilla build environment (Mozilla Foundation, 2015)
+		case mozillabuild = "mozillabuild"
+		/// Media Player Classic - Home Cinema (doom9 folks, 2014)
+		case mpc = "mpc"
+		/// MS Paint (Microsoft, 2010)
+		case mspaint = "mspaint"
+		/// Meta Trader 4 (, 2005)
+		case mt4 = "mt4"
+		/// NJStar Chinese Word Processor trial (NJStar, 2015)
+		case njcwpTrial = "njcwp_trial"
+		/// NJStar Japanese Word Processor trial (NJStar, 2009)
+		case njjwpTrial = "njjwp_trial"
+		/// Nook for PC (e-book reader) (Barnes & Noble, 2011)
+		case nook = "nook"
+		/// Notepad++ (Don Ho, 2019)
+		case npp = "npp"
+		/// OllyDbg (ollydbg.de, 2004)
+		case ollydbg110 = "ollydbg110"
+		/// OllyDbg (ollydbg.de, 2010)
+		case ollydbg200 = "ollydbg200"
+		/// OllyDbg (ollydbg.de, 2013)
+		case ollydbg201 = "ollydbg201"
+		/// Open Watcom C/C++ compiler (can compile win16 code!) (Watcom, 2010)
+		case openwatcom = "openwatcom"
+		/// EA Origin (EA, 2011)
+		case origin = "origin"
+		/// Process Explorer (Steve P. Miller, 2006)
+		case procexp = "procexp"
+		/// Protection ID (CDKiLLER & TippeX, 2016)
+		case protectionid = "protectionid"
+		/// MS Platform SDK 2003 (Microsoft, 2003)
+		case psdk2003 = "psdk2003"
+		/// MS Windows 7.1 SDK (Microsoft, 2010)
+		case psdkwin71 = "psdkwin71"
+		/// Safari (Apple, 2010)
+		case safari = "safari"
+		/// SketchUp 8 (Google, 2012)
+		case sketchup = "sketchup"
+		/// Steam (Valve, 2010)
+		case steam = "steam"
+		/// Ubisoft Connect (Ubisoft, 2020)
+		case ubisoftconnect = "ubisoftconnect"
+		/// µTorrent 2.2.1 (BitTorrent, 2011)
+		case utorrent = "utorrent"
+		/// µTorrent 3.4 (BitTorrent, 2011)
+		case utorrent3 = "utorrent3"
+		/// MS Visual C++ 2005 Express (Microsoft, 2005)
+		case vc2005express = "vc2005express"
+		/// MS Visual C++ 2005 Express SP1 (Microsoft, 2007)
+		case vc2005expresssp1 = "vc2005expresssp1"
+		/// MS Visual C++ 2005 Trial (Microsoft, 2005)
+		case vc2005trial = "vc2005trial"
+		/// MS Visual C++ 2008 Express (Microsoft, 2008)
+		case vc2008express = "vc2008express"
+		/// MS Visual C++ 2010 Express (Microsoft, 2010)
+		case vc2010express = "vc2010express"
+		/// VLC media player 2.2.1 (VideoLAN, 2015)
+		case vlc = "vlc"
+		/// MS Visual Studio Build Tools 2019 (Microsoft, 2019)
+		case vstools2019 = "vstools2019"
+		/// Winamp (Radionomy (AOL (Nullsoft)), 2013)
+		case winamp = "winamp"
+		/// WinRAR 6.11 (RARLAB, 1993)
+		case winrar = "winrar"
+		/// MS Windows Media Encoder 9 (broken in Wine) (Microsoft, 2002)
+		case wme9 = "wme9"
+
+		// MARK: - CustomStringConvertible
+
+		public var description: String {
+			switch self {
+			case ._3mLibrary:
+				return "3M Cloud Library (3M Company, 2015)"
+			case ._7zip:
+				return "7-Zip 24.09 (Igor Pavlov, 2024)"
+			case .adobeDiged:
+				return "Adobe Digital Editions 1.7 (Adobe, 2011)"
+			case .adobeDiged4:
+				return "Adobe Digital Editions 4.5 (Adobe, 2015)"
+			case .autohotkey:
+				return "AutoHotKey (autohotkey.org, 2010)"
+			case .busybox:
+				return "BusyBox FRP-4621-gf3c5e8bc3 (Ron Yorston / Busybox authors, 2021)"
+			case .cmake:
+				return "CMake 2.8 (Kitware, 2013)"
+			case .colorprofile:
+				return "Standard RGB color profile (Microsoft, 2005)"
+			case .controlpad:
+				return "MS ActiveX Control Pad (Microsoft, 1997)"
+			case .controlspy:
+				return "Control Spy 6  (Microsoft, 2005)"
+			case .dbgview:
+				return "Debug monitor (Mark Russinovich, 2019)"
+			case .depends:
+				return "Dependency Walker (Steve P. Miller, 2006)"
+			case .dotnet20sdk:
+				return "MS .NET 2.0 SDK (Microsoft, 2006)"
+			case .dxsdkAug2006:
+				return "MS DirectX SDK, August 2006 (developers only) (Microsoft, 2006)"
+			case .dxsdkJun2010:
+				return "MS DirectX SDK, June 2010 (developers only) (Microsoft, 2010)"
+			case .dxwnd:
+				return "Window hooker to run fullscreen programs in window and much more... (ghotik, 2011)"
+			case .emu8086:
+				return "emu8086 (emu8086.com, 2015)"
+			case .ev3:
+				return "Lego Mindstorms EV3 Home Edition (Lego, 2014)"
+			case .firefox:
+				return "Firefox 51.0 (Mozilla, 2017)"
+			case .fontxplorer:
+				return "Font Xplorer 1.2.2 (Moon Software, 2001)"
+			case .foobar2000:
+				return "foobar2000 v1.4 (Peter Pawlowski, 2018)"
+			case .hhw:
+				return "HTML Help Workshop (Microsoft, 2000)"
+			case .iceweasel:
+				return "GNU Icecat 31.7.0 (GNU Foundation, 2015)"
+			case .irfanview:
+				return "Irfanview (Irfan Skiljan, 2016)"
+			case .kindle:
+				return "Amazon Kindle (Amazon, 2017)"
+			case .kobo:
+				return "Kobo e-book reader (Kobo, 2011)"
+			case .mingw:
+				return "Minimalist GNU for Windows, including GCC for Windows (GNU, 2013)"
+			case .mozillabuild:
+				return "Mozilla build environment (Mozilla Foundation, 2015)"
+			case .mpc:
+				return "Media Player Classic - Home Cinema (doom9 folks, 2014)"
+			case .mspaint:
+				return "MS Paint (Microsoft, 2010)"
+			case .mt4:
+				return "Meta Trader 4 (, 2005)"
+			case .njcwpTrial:
+				return "NJStar Chinese Word Processor trial (NJStar, 2015)"
+			case .njjwpTrial:
+				return "NJStar Japanese Word Processor trial (NJStar, 2009)"
+			case .nook:
+				return "Nook for PC (e-book reader) (Barnes & Noble, 2011)"
+			case .npp:
+				return "Notepad++ (Don Ho, 2019)"
+			case .ollydbg110:
+				return "OllyDbg (ollydbg.de, 2004)"
+			case .ollydbg200:
+				return "OllyDbg (ollydbg.de, 2010)"
+			case .ollydbg201:
+				return "OllyDbg (ollydbg.de, 2013)"
+			case .openwatcom:
+				return "Open Watcom C/C++ compiler (can compile win16 code!) (Watcom, 2010)"
+			case .origin:
+				return "EA Origin (EA, 2011)"
+			case .procexp:
+				return "Process Explorer (Steve P. Miller, 2006)"
+			case .protectionid:
+				return "Protection ID (CDKiLLER & TippeX, 2016)"
+			case .psdk2003:
+				return "MS Platform SDK 2003 (Microsoft, 2003)"
+			case .psdkwin71:
+				return "MS Windows 7.1 SDK (Microsoft, 2010)"
+			case .safari:
+				return "Safari (Apple, 2010)"
+			case .sketchup:
+				return "SketchUp 8 (Google, 2012)"
+			case .steam:
+				return "Steam (Valve, 2010)"
+			case .ubisoftconnect:
+				return "Ubisoft Connect (Ubisoft, 2020)"
+			case .utorrent:
+				return "µTorrent 2.2.1 (BitTorrent, 2011)"
+			case .utorrent3:
+				return "µTorrent 3.4 (BitTorrent, 2011)"
+			case .vc2005express:
+				return "MS Visual C++ 2005 Express (Microsoft, 2005)"
+			case .vc2005expresssp1:
+				return "MS Visual C++ 2005 Express SP1 (Microsoft, 2007)"
+			case .vc2005trial:
+				return "MS Visual C++ 2005 Trial (Microsoft, 2005)"
+			case .vc2008express:
+				return "MS Visual C++ 2008 Express (Microsoft, 2008)"
+			case .vc2010express:
+				return "MS Visual C++ 2010 Express (Microsoft, 2010)"
+			case .vlc:
+				return "VLC media player 2.2.1 (VideoLAN, 2015)"
+			case .vstools2019:
+				return "MS Visual Studio Build Tools 2019 (Microsoft, 2019)"
+			case .winamp:
+				return "Winamp (Radionomy (AOL (Nullsoft)), 2013)"
+			case .winrar:
+				return "WinRAR 6.11 (RARLAB, 1993)"
+			case .wme9:
+				return "MS Windows Media Encoder 9 (broken in Wine) (Microsoft, 2002)"
+			}
+		}
+	}
+}
+//
+// Verbs+Benchmark.swift
+// WineKit
+// 
+// Source: https://github.com/Winetricks/winetricks
+//
+// Automatically generated on 1.3.2025.
+//
+
+import Foundation
+
+extension Winetricks {
+	/// Winetricks verbs from Benchmark.txt
+	public enum Benchmark: String, Hashable, Equatable, Codable, CaseIterable, CustomStringConvertible, Sendable {
+		/// 3D Mark 03 (Futuremark, 2003)
+		case _3dmark03 = "3dmark03"
+		/// 3D Mark 05 (Futuremark, 2005)
+		case _3dmark05 = "3dmark05"
+		/// 3D Mark 06 (Futuremark, 2006)
+		case _3dmark06 = "3dmark06"
+		/// 3DMark2000 (MadOnion.com, 2000)
+		case _3dmark2000 = "3dmark2000"
+		/// 3DMark2001 (MadOnion.com, 2001)
+		case _3dmark2001 = "3dmark2001"
+		/// S.T.A.L.K.E.R.: Call of Pripyat benchmark (GSC Game World, 2009)
+		case stalkerPripyatBench = "stalker_pripyat_bench"
+		/// Unigen Heaven 2.1 Benchmark (Unigen, 2010)
+		case unigineHeaven = "unigine_heaven"
+		/// wglgears (Clinton L. Jeffery, 2005)
+		case wglgears = "wglgears"
+
+		// MARK: - CustomStringConvertible
+
+		public var description: String {
+			switch self {
+			case ._3dmark03:
+				return "3D Mark 03 (Futuremark, 2003)"
+			case ._3dmark05:
+				return "3D Mark 05 (Futuremark, 2005)"
+			case ._3dmark06:
+				return "3D Mark 06 (Futuremark, 2006)"
+			case ._3dmark2000:
+				return "3DMark2000 (MadOnion.com, 2000)"
+			case ._3dmark2001:
+				return "3DMark2001 (MadOnion.com, 2001)"
+			case .stalkerPripyatBench:
+				return "S.T.A.L.K.E.R.: Call of Pripyat benchmark (GSC Game World, 2009)"
+			case .unigineHeaven:
+				return "Unigen Heaven 2.1 Benchmark (Unigen, 2010)"
+			case .wglgears:
+				return "wglgears (Clinton L. Jeffery, 2005)"
+			}
+		}
+	}
+}
+//
 // Verbs+DLL.swift
 // WineKit
 // 
@@ -1261,6 +1579,676 @@ extension Winetricks {
 				return "MS XNA Framework Redistributable 4.0 (Microsoft, 2010)"
 			case .xvid:
 				return "Xvid Video Codec (xvid.org, 2019)"
+			}
+		}
+	}
+}
+//
+// Verbs+Font.swift
+// WineKit
+// 
+// Source: https://github.com/Winetricks/winetricks
+//
+// Automatically generated on 1.3.2025.
+//
+
+import Foundation
+
+extension Winetricks {
+	/// Winetricks verbs from Font.txt
+	public enum Font: String, Hashable, Equatable, Codable, CaseIterable, CustomStringConvertible, Sendable {
+		/// All fonts (various, 1998-2010)
+		case allfonts = "allfonts"
+		/// MS Andale Mono font (Microsoft, 2008)
+		case andale = "andale"
+		/// MS Arial / Arial Black fonts (Microsoft, 2008)
+		case arial = "arial"
+		/// Baekmuk Korean fonts (Wooderart Inc. / kldp.net, 1999)
+		case baekmuk = "baekmuk"
+		/// MS Calibri font (Microsoft, 2007)
+		case calibri = "calibri"
+		/// MS Cambria font (Microsoft, 2009)
+		case cambria = "cambria"
+		/// MS Candara font (Microsoft, 2009)
+		case candara = "candara"
+		/// All Chinese, Japanese, Korean fonts and aliases (Various, )
+		case cjkfonts = "cjkfonts"
+		/// MS Comic Sans fonts (Microsoft, 2008)
+		case comicsans = "comicsans"
+		/// MS Consolas console font (Microsoft, 2011)
+		case consolas = "consolas"
+		/// MS Constantia font (Microsoft, 2009)
+		case constantia = "constantia"
+		/// MS Corbel font (Microsoft, 2009)
+		case corbel = "corbel"
+		/// MS Arial, Courier, Times fonts (Microsoft, 2008)
+		case corefonts = "corefonts"
+		/// MS Courier fonts (Microsoft, 2008)
+		case courier = "courier"
+		/// Droid fonts (Ascender Corporation, 2009)
+		case droid = "droid"
+		/// Updated fonts for Romanian and Bulgarian (Microsoft, 2008)
+		case eufonts = "eufonts"
+		/// Creates aliases for Chinese fonts using Source Han Sans fonts (Adobe, 2019)
+		case fakechinese = "fakechinese"
+		/// Creates aliases for Japanese fonts using Source Han Sans fonts (Adobe, 2019)
+		case fakejapanese = "fakejapanese"
+		/// Creates aliases for Japanese fonts using IPAMona fonts (Jun Kobayashi, 2008)
+		case fakejapaneseIpamona = "fakejapanese_ipamona"
+		/// Creates aliases for Japanese Meiryo fonts using VLGothic fonts (Project Vine / Daisuke Suzuki, 2014)
+		case fakejapaneseVlgothic = "fakejapanese_vlgothic"
+		/// Creates aliases for Korean fonts using Source Han Sans fonts (Adobe, 2019)
+		case fakekorean = "fakekorean"
+		/// MS Georgia fonts (Microsoft, 2008)
+		case georgia = "georgia"
+		/// MS Impact fonts (Microsoft, 2008)
+		case impact = "impact"
+		/// IPAMona Japanese fonts (Jun Kobayashi, 2008)
+		case ipamona = "ipamona"
+		/// Red Hat Liberation fonts (Mono, Sans, SansNarrow, Serif) (Red Hat, 2008)
+		case liberation = "liberation"
+		/// MS Lucida Console font (Microsoft, 1998)
+		case lucida = "lucida"
+		/// MS Meiryo font (Microsoft, 2009)
+		case meiryo = "meiryo"
+		/// MS Sans Serif font (Microsoft, 2004)
+		case micross = "micross"
+		/// OpenSymbol fonts (replacement for Wingdings) (libreoffice.org, 2022)
+		case opensymbol = "opensymbol"
+		/// All MS PowerPoint Viewer fonts (various, )
+		case pptfonts = "pptfonts"
+		/// Source Han Sans fonts (Adobe, 2021)
+		case sourcehansans = "sourcehansans"
+		/// MS Tahoma font (not part of corefonts) (Microsoft, 1999)
+		case tahoma = "tahoma"
+		/// Takao Japanese fonts (Jun Kobayashi, 2010)
+		case takao = "takao"
+		/// MS Times fonts (Microsoft, 2008)
+		case times = "times"
+		/// MS Trebuchet fonts (Microsoft, 2008)
+		case trebuchet = "trebuchet"
+		/// Ubuntu Font Family (Ubuntu, 2010)
+		case uff = "uff"
+		/// Unifont alternative to Arial Unicode MS (Roman Czyborra / GNU, 2021)
+		case unifont = "unifont"
+		/// MS Verdana fonts (Microsoft, 2008)
+		case verdana = "verdana"
+		/// VLGothic Japanese fonts (Project Vine / Daisuke Suzuki, 2014)
+		case vlgothic = "vlgothic"
+		/// MS Webdings fonts (Microsoft, 2008)
+		case webdings = "webdings"
+		/// WenQuanYi CJK font (wenq.org, 2009)
+		case wenquanyi = "wenquanyi"
+		/// WenQuanYi ZenHei font (wenq.org, 2009)
+		case wenquanyizenhei = "wenquanyizenhei"
+
+		// MARK: - CustomStringConvertible
+
+		public var description: String {
+			switch self {
+			case .allfonts:
+				return "All fonts (various, 1998-2010)"
+			case .andale:
+				return "MS Andale Mono font (Microsoft, 2008)"
+			case .arial:
+				return "MS Arial / Arial Black fonts (Microsoft, 2008)"
+			case .baekmuk:
+				return "Baekmuk Korean fonts (Wooderart Inc. / kldp.net, 1999)"
+			case .calibri:
+				return "MS Calibri font (Microsoft, 2007)"
+			case .cambria:
+				return "MS Cambria font (Microsoft, 2009)"
+			case .candara:
+				return "MS Candara font (Microsoft, 2009)"
+			case .cjkfonts:
+				return "All Chinese, Japanese, Korean fonts and aliases (Various, )"
+			case .comicsans:
+				return "MS Comic Sans fonts (Microsoft, 2008)"
+			case .consolas:
+				return "MS Consolas console font (Microsoft, 2011)"
+			case .constantia:
+				return "MS Constantia font (Microsoft, 2009)"
+			case .corbel:
+				return "MS Corbel font (Microsoft, 2009)"
+			case .corefonts:
+				return "MS Arial, Courier, Times fonts (Microsoft, 2008)"
+			case .courier:
+				return "MS Courier fonts (Microsoft, 2008)"
+			case .droid:
+				return "Droid fonts (Ascender Corporation, 2009)"
+			case .eufonts:
+				return "Updated fonts for Romanian and Bulgarian (Microsoft, 2008)"
+			case .fakechinese:
+				return "Creates aliases for Chinese fonts using Source Han Sans fonts (Adobe, 2019)"
+			case .fakejapanese:
+				return "Creates aliases for Japanese fonts using Source Han Sans fonts (Adobe, 2019)"
+			case .fakejapaneseIpamona:
+				return "Creates aliases for Japanese fonts using IPAMona fonts (Jun Kobayashi, 2008)"
+			case .fakejapaneseVlgothic:
+				return "Creates aliases for Japanese Meiryo fonts using VLGothic fonts (Project Vine / Daisuke Suzuki, 2014)"
+			case .fakekorean:
+				return "Creates aliases for Korean fonts using Source Han Sans fonts (Adobe, 2019)"
+			case .georgia:
+				return "MS Georgia fonts (Microsoft, 2008)"
+			case .impact:
+				return "MS Impact fonts (Microsoft, 2008)"
+			case .ipamona:
+				return "IPAMona Japanese fonts (Jun Kobayashi, 2008)"
+			case .liberation:
+				return "Red Hat Liberation fonts (Mono, Sans, SansNarrow, Serif) (Red Hat, 2008)"
+			case .lucida:
+				return "MS Lucida Console font (Microsoft, 1998)"
+			case .meiryo:
+				return "MS Meiryo font (Microsoft, 2009)"
+			case .micross:
+				return "MS Sans Serif font (Microsoft, 2004)"
+			case .opensymbol:
+				return "OpenSymbol fonts (replacement for Wingdings) (libreoffice.org, 2022)"
+			case .pptfonts:
+				return "All MS PowerPoint Viewer fonts (various, )"
+			case .sourcehansans:
+				return "Source Han Sans fonts (Adobe, 2021)"
+			case .tahoma:
+				return "MS Tahoma font (not part of corefonts) (Microsoft, 1999)"
+			case .takao:
+				return "Takao Japanese fonts (Jun Kobayashi, 2010)"
+			case .times:
+				return "MS Times fonts (Microsoft, 2008)"
+			case .trebuchet:
+				return "MS Trebuchet fonts (Microsoft, 2008)"
+			case .uff:
+				return "Ubuntu Font Family (Ubuntu, 2010)"
+			case .unifont:
+				return "Unifont alternative to Arial Unicode MS (Roman Czyborra / GNU, 2021)"
+			case .verdana:
+				return "MS Verdana fonts (Microsoft, 2008)"
+			case .vlgothic:
+				return "VLGothic Japanese fonts (Project Vine / Daisuke Suzuki, 2014)"
+			case .webdings:
+				return "MS Webdings fonts (Microsoft, 2008)"
+			case .wenquanyi:
+				return "WenQuanYi CJK font (wenq.org, 2009)"
+			case .wenquanyizenhei:
+				return "WenQuanYi ZenHei font (wenq.org, 2009)"
+			}
+		}
+	}
+}
+//
+// Verbs+Setting.swift
+// WineKit
+// 
+// Source: https://github.com/Winetricks/winetricks
+//
+// Automatically generated on 1.3.2025.
+//
+
+import Foundation
+
+extension Winetricks {
+	/// Winetricks verbs from Setting.txt
+	public enum Setting: String, Hashable, Equatable, Codable, CaseIterable, CustomStringConvertible, Sendable {
+		/// Override most common DLLs to builtin
+		case alldllsBuiltin = "alldlls=builtin"
+		/// Remove all DLL overrides
+		case alldllsDefault = "alldlls=default"
+		/// Prevent winedbg from launching when an unhandled exception occurs
+		case autostartWinedbgDisabled = "autostart_winedbg=disabled"
+		/// Automatically launch winedbg when an unhandled exception occurs (default)
+		case autostartWinedbgEnabled = "autostart_winedbg=enabled"
+		/// Fake verb that always returns false
+		case bad = "bad"
+		/// Disable CheckFloatConstants (default)
+		case cfcDisabled = "cfc=disabled"
+		/// Enable CheckFloatConstants
+		case cfcEnabled = "cfc=enabled"
+		/// Enable and force serialisation of OpenGL or Vulkan commands between multiple command streams in the same application
+		case csmtForce = "csmt=force"
+		/// Disable Command Stream Multithreading
+		case csmtOff = "csmt=off"
+		/// Enable Command Stream Multithreading (default)
+		case csmtOn = "csmt=on"
+		/// Check for broken fonts
+		case fontfix = "fontfix"
+		/// Enable subpixel font smoothing for BGR LCDs
+		case fontsmoothBgr = "fontsmooth=bgr"
+		/// Disable font smoothing
+		case fontsmoothDisable = "fontsmooth=disable"
+		/// Enable subpixel font smoothing
+		case fontsmoothGray = "fontsmooth=gray"
+		/// Enable subpixel font smoothing for RGB LCDs
+		case fontsmoothRgb = "fontsmooth=rgb"
+		/// Force using Mono instead of .NET (for debugging)
+		case forcemono = "forcemono"
+		/// Fake verb that always returns true
+		case good = "good"
+		/// Disable cursor clipping for full-screen windows (default)
+		case grabfullscreenN = "grabfullscreen=n"
+		/// Force cursor clipping for full-screen windows (needed by some games)
+		case grabfullscreenY = "grabfullscreen=y"
+		/// Set graphics driver to default
+		case graphicsDefault = "graphics=default"
+		/// Set graphics driver to Quartz (for macOS)
+		case graphicsMac = "graphics=mac"
+		/// Set graphics driver to Wayland
+		case graphicsWayland = "graphics=wayland"
+		/// Set graphics driver to X11
+		case graphicsX11 = "graphics=x11"
+		/// Set MaxShaderModelGS to 0
+		case gsm0 = "gsm=0"
+		/// Set MaxShaderModelGS to 1
+		case gsm1 = "gsm=1"
+		/// Set MaxShaderModelGS to 2
+		case gsm2 = "gsm=2"
+		/// Set MaxShaderModelGS to 3
+		case gsm3 = "gsm=3"
+		/// Enable heap checking with GlobalFlag
+		case heapcheck = "heapcheck"
+		/// Disable hiding Wine exports from applications (wine-staging)
+		case hidewineexportsDisable = "hidewineexports=disable"
+		/// Enable hiding Wine exports from applications (wine-staging)
+		case hidewineexportsEnable = "hidewineexports=enable"
+		/// Add empty C:\windows\system32\driverstc\{hosts,services} files
+		case hosts = "hosts"
+		/// Remove wineprefix links to /home/austin
+		case isolateHome = "isolate_home"
+		/// Enable mapping opt->alt and cmd->ctrl keys for the Mac native driver
+		case mackeyremapBoth = "mackeyremap=both"
+		/// Enable mapping of left opt->alt and cmd->ctrl keys for the Mac native driver
+		case mackeyremapLeft = "mackeyremap=left"
+		/// Do not remap keys for the Mac native driver (default)
+		case mackeyremapNone = "mackeyremap=none"
+		/// Disable exporting MIME-type file associations to the native desktop
+		case mimeassocOff = "mimeassoc=off"
+		/// Enable exporting MIME-type file associations to the native desktop (default)
+		case mimeassocOn = "mimeassoc=on"
+		/// Set DirectInput MouseWarpOverride to disable
+		case mwoDisable = "mwo=disable"
+		/// Set DirectInput MouseWarpOverride to enabled (default)
+		case mwoEnabled = "mwo=enabled"
+		/// Set DirectInput MouseWarpOverride to force (needed by some games)
+		case mwoForce = "mwo=force"
+		/// Override odbc32, odbccp32 and oledb32
+		case nativeMdac = "native_mdac"
+		/// Override oleaut32
+		case nativeOleaut32 = "native_oleaut32"
+		/// Disable crash dialog
+		case nocrashdialog = "nocrashdialog"
+		/// Set NonPower2Mode to repack
+		case npmRepack = "npm=repack"
+		/// Set Windows version to Windows NT 3.51
+		case nt351 = "nt351"
+		/// Set Windows version to Windows NT 4.0
+		case nt40 = "nt40"
+		/// Set OffscreenRenderingMode=backbuffer
+		case ormBackbuffer = "orm=backbuffer"
+		/// Set OffscreenRenderingMode=fbo (default)
+		case ormFbo = "orm=fbo"
+		/// Set MaxShaderModelPS to 0
+		case psm0 = "psm=0"
+		/// Set MaxShaderModelPS to 1
+		case psm1 = "psm=1"
+		/// Set MaxShaderModelPS to 2
+		case psm2 = "psm=2"
+		/// Set MaxShaderModelPS to 3
+		case psm3 = "psm=3"
+		/// Remove builtin wine-mono
+		case removeMono = "remove_mono"
+		/// Set renderer to gdi
+		case rendererGdi = "renderer=gdi"
+		/// Set renderer to gl
+		case rendererGl = "renderer=gl"
+		/// Set renderer to no3d
+		case rendererNo3d = "renderer=no3d"
+		/// Set renderer to vulkan
+		case rendererVulkan = "renderer=vulkan"
+		/// Set RenderTargetLockMode to auto (default)
+		case rtlmAuto = "rtlm=auto"
+		/// Set RenderTargetLockMode to disabled
+		case rtlmDisabled = "rtlm=disabled"
+		/// Set RenderTargetLockMode to readdraw
+		case rtlmReaddraw = "rtlm=readdraw"
+		/// Set RenderTargetLockMode to readtex
+		case rtlmReadtex = "rtlm=readtex"
+		/// Set RenderTargetLockMode to texdraw
+		case rtlmTexdraw = "rtlm=texdraw"
+		/// Set RenderTargetLockMode to textex
+		case rtlmTextex = "rtlm=textex"
+		/// Sandbox the wineprefix - remove links to /home/austin
+		case sandbox = "sandbox"
+		/// Set MIDImap device to the value specified in the MIDI_DEVICE environment variable
+		case setMididevice = "set_mididevice"
+		/// set user PATH variable in wine prefix specified by native and/or wine paths in WINEPATH environment variable with ';' as path separator
+		case setUserpath = "set_userpath"
+		/// Set shader_backend to arb
+		case shaderBackendArb = "shader_backend=arb"
+		/// Set shader_backend to glsl
+		case shaderBackendGlsl = "shader_backend=glsl"
+		/// Set shader_backend to none
+		case shaderBackendNone = "shader_backend=none"
+		/// Set sound driver to ALSA
+		case soundAlsa = "sound=alsa"
+		/// Set sound driver to Mac CoreAudio
+		case soundCoreaudio = "sound=coreaudio"
+		/// Set sound driver to disabled
+		case soundDisabled = "sound=disabled"
+		/// Set sound driver to OSS
+		case soundOss = "sound=oss"
+		/// Set sound driver to PulseAudio
+		case soundPulse = "sound=pulse"
+		/// Disable Struct Shader Math (default)
+		case ssmDisabled = "ssm=disabled"
+		/// Enable Struct Shader Math
+		case ssmEnabled = "ssm=enabled"
+		/// Disable UseTakeFocus (default)
+		case usetakefocusN = "usetakefocus=n"
+		/// Enable UseTakeFocus
+		case usetakefocusY = "usetakefocus=y"
+		/// Enable virtual desktop, set size to 1024x768
+		case vd1024x768 = "vd=1024x768"
+		/// Enable virtual desktop, set size to 1280x1024
+		case vd1280x1024 = "vd=1280x1024"
+		/// Enable virtual desktop, set size to 1440x900
+		case vd1440x900 = "vd=1440x900"
+		/// Enable virtual desktop, set size to 640x480
+		case vd640x480 = "vd=640x480"
+		/// Enable virtual desktop, set size to 800x600
+		case vd800x600 = "vd=800x600"
+		/// Disable virtual desktop
+		case vdOff = "vd=off"
+		/// Tell Wine your video card has 1024MB RAM
+		case videomemorysize1024 = "videomemorysize=1024"
+		/// Tell Wine your video card has 2048MB RAM
+		case videomemorysize2048 = "videomemorysize=2048"
+		/// Tell Wine your video card has 512MB RAM
+		case videomemorysize512 = "videomemorysize=512"
+		/// Let Wine detect amount of video card memory
+		case videomemorysizeDefault = "videomemorysize=default"
+		/// Set Windows version to Windows Vista
+		case vista = "vista"
+		/// Set MaxShaderModelVS to 0
+		case vsm0 = "vsm=0"
+		/// Set MaxShaderModelVS to 1
+		case vsm1 = "vsm=1"
+		/// Set MaxShaderModelVS to 2
+		case vsm2 = "vsm=2"
+		/// Set MaxShaderModelVS to 3
+		case vsm3 = "vsm=3"
+		/// Set Windows version to Windows 10
+		case win10 = "win10"
+		/// Set Windows version to Windows 11
+		case win11 = "win11"
+		/// Set Windows version to Windows 2.0
+		case win20 = "win20"
+		/// Set Windows version to Windows 2000
+		case win2k = "win2k"
+		/// Set Windows version to Windows 2003
+		case win2k3 = "win2k3"
+		/// Set Windows version to Windows 2008
+		case win2k8 = "win2k8"
+		/// Set Windows version to Windows 2008 R2
+		case win2k8r2 = "win2k8r2"
+		/// Set Windows version to Windows 3.0
+		case win30 = "win30"
+		/// Set Windows version to Windows 3.1
+		case win31 = "win31"
+		/// Set Windows version to Windows 7
+		case win7 = "win7"
+		/// Set Windows version to Windows 8
+		case win8 = "win8"
+		/// Set Windows version to Windows 8.1
+		case win81 = "win81"
+		/// Set Windows version to Windows 95
+		case win95 = "win95"
+		/// Set Windows version to Windows 98
+		case win98 = "win98"
+		/// Prevent the window manager from decorating windows
+		case windowmanagerdecoratedN = "windowmanagerdecorated=n"
+		/// Allow the window manager to decorate windows (default)
+		case windowmanagerdecoratedY = "windowmanagerdecorated=y"
+		/// Prevent the window manager from controlling windows
+		case windowmanagermanagedN = "windowmanagermanaged=n"
+		/// Allow the window manager to control windows (default)
+		case windowmanagermanagedY = "windowmanagermanaged=y"
+		/// Set Windows version to Windows ME
+		case winme = "winme"
+		/// Set Windows version to default (win7)
+		case winver = "winver="
+		/// Set Windows version to Windows XP
+		case winxp = "winxp"
+
+		// MARK: - CustomStringConvertible
+
+		public var description: String {
+			switch self {
+			case .alldllsBuiltin:
+				return "Override most common DLLs to builtin"
+			case .alldllsDefault:
+				return "Remove all DLL overrides"
+			case .autostartWinedbgDisabled:
+				return "Prevent winedbg from launching when an unhandled exception occurs"
+			case .autostartWinedbgEnabled:
+				return "Automatically launch winedbg when an unhandled exception occurs (default)"
+			case .bad:
+				return "Fake verb that always returns false"
+			case .cfcDisabled:
+				return "Disable CheckFloatConstants (default)"
+			case .cfcEnabled:
+				return "Enable CheckFloatConstants"
+			case .csmtForce:
+				return "Enable and force serialisation of OpenGL or Vulkan commands between multiple command streams in the same application"
+			case .csmtOff:
+				return "Disable Command Stream Multithreading"
+			case .csmtOn:
+				return "Enable Command Stream Multithreading (default)"
+			case .fontfix:
+				return "Check for broken fonts"
+			case .fontsmoothBgr:
+				return "Enable subpixel font smoothing for BGR LCDs"
+			case .fontsmoothDisable:
+				return "Disable font smoothing"
+			case .fontsmoothGray:
+				return "Enable subpixel font smoothing"
+			case .fontsmoothRgb:
+				return "Enable subpixel font smoothing for RGB LCDs"
+			case .forcemono:
+				return "Force using Mono instead of .NET (for debugging)"
+			case .good:
+				return "Fake verb that always returns true"
+			case .grabfullscreenN:
+				return "Disable cursor clipping for full-screen windows (default)"
+			case .grabfullscreenY:
+				return "Force cursor clipping for full-screen windows (needed by some games)"
+			case .graphicsDefault:
+				return "Set graphics driver to default"
+			case .graphicsMac:
+				return "Set graphics driver to Quartz (for macOS)"
+			case .graphicsWayland:
+				return "Set graphics driver to Wayland"
+			case .graphicsX11:
+				return "Set graphics driver to X11"
+			case .gsm0:
+				return "Set MaxShaderModelGS to 0"
+			case .gsm1:
+				return "Set MaxShaderModelGS to 1"
+			case .gsm2:
+				return "Set MaxShaderModelGS to 2"
+			case .gsm3:
+				return "Set MaxShaderModelGS to 3"
+			case .heapcheck:
+				return "Enable heap checking with GlobalFlag"
+			case .hidewineexportsDisable:
+				return "Disable hiding Wine exports from applications (wine-staging)"
+			case .hidewineexportsEnable:
+				return "Enable hiding Wine exports from applications (wine-staging)"
+			case .hosts:
+				return "Add empty C:\\windows\\system32\\driverstc\\{hosts,services} files"
+			case .isolateHome:
+				return "Remove wineprefix links to /home/austin"
+			case .mackeyremapBoth:
+				return "Enable mapping opt->alt and cmd->ctrl keys for the Mac native driver"
+			case .mackeyremapLeft:
+				return "Enable mapping of left opt->alt and cmd->ctrl keys for the Mac native driver"
+			case .mackeyremapNone:
+				return "Do not remap keys for the Mac native driver (default)"
+			case .mimeassocOff:
+				return "Disable exporting MIME-type file associations to the native desktop"
+			case .mimeassocOn:
+				return "Enable exporting MIME-type file associations to the native desktop (default)"
+			case .mwoDisable:
+				return "Set DirectInput MouseWarpOverride to disable"
+			case .mwoEnabled:
+				return "Set DirectInput MouseWarpOverride to enabled (default)"
+			case .mwoForce:
+				return "Set DirectInput MouseWarpOverride to force (needed by some games)"
+			case .nativeMdac:
+				return "Override odbc32, odbccp32 and oledb32"
+			case .nativeOleaut32:
+				return "Override oleaut32"
+			case .nocrashdialog:
+				return "Disable crash dialog"
+			case .npmRepack:
+				return "Set NonPower2Mode to repack"
+			case .nt351:
+				return "Set Windows version to Windows NT 3.51"
+			case .nt40:
+				return "Set Windows version to Windows NT 4.0"
+			case .ormBackbuffer:
+				return "Set OffscreenRenderingMode=backbuffer"
+			case .ormFbo:
+				return "Set OffscreenRenderingMode=fbo (default)"
+			case .psm0:
+				return "Set MaxShaderModelPS to 0"
+			case .psm1:
+				return "Set MaxShaderModelPS to 1"
+			case .psm2:
+				return "Set MaxShaderModelPS to 2"
+			case .psm3:
+				return "Set MaxShaderModelPS to 3"
+			case .removeMono:
+				return "Remove builtin wine-mono"
+			case .rendererGdi:
+				return "Set renderer to gdi"
+			case .rendererGl:
+				return "Set renderer to gl"
+			case .rendererNo3d:
+				return "Set renderer to no3d"
+			case .rendererVulkan:
+				return "Set renderer to vulkan"
+			case .rtlmAuto:
+				return "Set RenderTargetLockMode to auto (default)"
+			case .rtlmDisabled:
+				return "Set RenderTargetLockMode to disabled"
+			case .rtlmReaddraw:
+				return "Set RenderTargetLockMode to readdraw"
+			case .rtlmReadtex:
+				return "Set RenderTargetLockMode to readtex"
+			case .rtlmTexdraw:
+				return "Set RenderTargetLockMode to texdraw"
+			case .rtlmTextex:
+				return "Set RenderTargetLockMode to textex"
+			case .sandbox:
+				return "Sandbox the wineprefix - remove links to /home/austin"
+			case .setMididevice:
+				return "Set MIDImap device to the value specified in the MIDI_DEVICE environment variable"
+			case .setUserpath:
+				return "set user PATH variable in wine prefix specified by native and/or wine paths in WINEPATH environment variable with ';' as path separator"
+			case .shaderBackendArb:
+				return "Set shader_backend to arb"
+			case .shaderBackendGlsl:
+				return "Set shader_backend to glsl"
+			case .shaderBackendNone:
+				return "Set shader_backend to none"
+			case .soundAlsa:
+				return "Set sound driver to ALSA"
+			case .soundCoreaudio:
+				return "Set sound driver to Mac CoreAudio"
+			case .soundDisabled:
+				return "Set sound driver to disabled"
+			case .soundOss:
+				return "Set sound driver to OSS"
+			case .soundPulse:
+				return "Set sound driver to PulseAudio"
+			case .ssmDisabled:
+				return "Disable Struct Shader Math (default)"
+			case .ssmEnabled:
+				return "Enable Struct Shader Math"
+			case .usetakefocusN:
+				return "Disable UseTakeFocus (default)"
+			case .usetakefocusY:
+				return "Enable UseTakeFocus"
+			case .vd1024x768:
+				return "Enable virtual desktop, set size to 1024x768"
+			case .vd1280x1024:
+				return "Enable virtual desktop, set size to 1280x1024"
+			case .vd1440x900:
+				return "Enable virtual desktop, set size to 1440x900"
+			case .vd640x480:
+				return "Enable virtual desktop, set size to 640x480"
+			case .vd800x600:
+				return "Enable virtual desktop, set size to 800x600"
+			case .vdOff:
+				return "Disable virtual desktop"
+			case .videomemorysize1024:
+				return "Tell Wine your video card has 1024MB RAM"
+			case .videomemorysize2048:
+				return "Tell Wine your video card has 2048MB RAM"
+			case .videomemorysize512:
+				return "Tell Wine your video card has 512MB RAM"
+			case .videomemorysizeDefault:
+				return "Let Wine detect amount of video card memory"
+			case .vista:
+				return "Set Windows version to Windows Vista"
+			case .vsm0:
+				return "Set MaxShaderModelVS to 0"
+			case .vsm1:
+				return "Set MaxShaderModelVS to 1"
+			case .vsm2:
+				return "Set MaxShaderModelVS to 2"
+			case .vsm3:
+				return "Set MaxShaderModelVS to 3"
+			case .win10:
+				return "Set Windows version to Windows 10"
+			case .win11:
+				return "Set Windows version to Windows 11"
+			case .win20:
+				return "Set Windows version to Windows 2.0"
+			case .win2k:
+				return "Set Windows version to Windows 2000"
+			case .win2k3:
+				return "Set Windows version to Windows 2003"
+			case .win2k8:
+				return "Set Windows version to Windows 2008"
+			case .win2k8r2:
+				return "Set Windows version to Windows 2008 R2"
+			case .win30:
+				return "Set Windows version to Windows 3.0"
+			case .win31:
+				return "Set Windows version to Windows 3.1"
+			case .win7:
+				return "Set Windows version to Windows 7"
+			case .win8:
+				return "Set Windows version to Windows 8"
+			case .win81:
+				return "Set Windows version to Windows 8.1"
+			case .win95:
+				return "Set Windows version to Windows 95"
+			case .win98:
+				return "Set Windows version to Windows 98"
+			case .windowmanagerdecoratedN:
+				return "Prevent the window manager from decorating windows"
+			case .windowmanagerdecoratedY:
+				return "Allow the window manager to decorate windows (default)"
+			case .windowmanagermanagedN:
+				return "Prevent the window manager from controlling windows"
+			case .windowmanagermanagedY:
+				return "Allow the window manager to control windows (default)"
+			case .winme:
+				return "Set Windows version to Windows ME"
+			case .winver:
+				return "Set Windows version to default (win7)"
+			case .winxp:
+				return "Set Windows version to Windows XP"
 			}
 		}
 	}

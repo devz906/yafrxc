@@ -9,15 +9,11 @@ let package = Package(
         .library(name: "WineKit", targets: ["WineKit"])
     ],
     targets: [
+        .target(name: "WindowsFileKit", path: "Sources/WindowsFileKit"),
         .target(
-            name: "WindowsFileKit",
-            path: "Sources/WindowsFileKit"
-        ),
-        .target(
-            name: "WineKit",
+            name: "WineKit", 
             dependencies: ["WindowsFileKit"],
             path: "Sources/WineKit",
-            sources: ["FlatDomain", "Logger.swift", "Model", "Wine", "TaskManager"], 
             resources: [.process("Resources")]
         )
     ]
