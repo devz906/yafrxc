@@ -4,30 +4,29 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  build_engine:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Build Engine Body (The Full ZIP)
+      - name: Assemble Titan Engine
         run: |
-          rm -rf engine_final staging_core
-          mkdir -p engine_final staging_core
-          
-          # 1. Unpack Core
+          mkdir -p titan_dist
           cat EngineParts/wine_parts.* > wine_core.zip
-          unzip -q wine_core.zip -d staging_core/
+          unzip -q wine_core.zip -d titan_dist/
+          if [ -d "wine" ]; then ditto wine titan_dist/wine/; fi
+          cd titan_dist && zip -r ../TitanEngine_790MB.zip . && cd ..
           
-          # 2. Merge all into engine_final
-          ditto staging_core engine_final/
-          if [ -d "wine" ]; then
-            ditto wine engine_final/wine/
-          fi
-          
-          # 3. Create ONE flat zip (no zips inside zips)
-          cd engine_final && zip -r ../TitanEngine.zip . && cd ..
-        
-      - name: Build UI Head
+      - name: Upload Engine Only
+        uses: actions/upload-artifact@v4
+        with:
+          name: TitanEngine-Body
+          path: TitanEngine_790MB.zip
+
+  build_ui:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Tiny IPA
         run: |
           cd Shell/Sources/WineKit
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
@@ -49,15 +48,12 @@ jobs:
               <key>CFBundleShortVersionString</key><string>1.0</string>
               <key>LSRequiresIPhoneOS</key><true/>
               <key>UIFileSharingEnabled</key><true/>
-              <key>LSSupportsOpeningDocumentsInPlace</key><true/>
           </dict></plist>
           EOP
           ditto -c -k --sequesterRsrc --keepParent Payload WineKit.ipa
           
-      - name: Upload
+      - name: Upload UI Only
         uses: actions/upload-artifact@v4
         with:
-          name: WineKit-Dual-Package
-          path: |
-            WineKit.ipa
-            TitanEngine.zip
+          name: WineKit-UI-Head
+          path: WineKit.ipa
