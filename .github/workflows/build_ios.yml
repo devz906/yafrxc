@@ -14,19 +14,22 @@ jobs:
           mkdir -p ../FINAL_ENGINE_INJECTION
           cat EngineParts/wine_parts.* > wine_engine.zip
           unzip -q wine_engine.zip -d ../FINAL_ENGINE_INJECTION
-          # Remove forbidden files
           find ../FINAL_ENGINE_INJECTION -name "Info.plist" -delete
         
-      - name: Build UI Shell
+      - name: Build Bare-Metal Shell
         run: |
           cd Shell
-          # Target iOS 18.0 for iOS 26.x compatibility and modern API support
+          # Clearing any cached derived data to fix the accessor error
+          rm -rf .swiftpm
+          
           xcodebuild archive \
             -scheme WineKit \
             -destination "generic/platform=iOS" \
             -archivePath ../WineKit.xcarchive \
             IPHONEOS_DEPLOYMENT_TARGET=18.0 \
             SWIFT_OPTIMIZATION_LEVEL="-Onone" \
+            SKIP_INSTALL=NO \
+            BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
           
@@ -37,7 +40,7 @@ jobs:
           cp -r "$APP_PATH" Payload/
           APP_NAME=$(basename "$APP_PATH")
           
-          # Inject the engine into the bundle manually
+          # Injecting the engine directly into the flattened bundle
           mkdir -p "Payload/$APP_NAME/wine"
           cp -r ../FINAL_ENGINE_INJECTION/* "Payload/$APP_NAME/wine/"
           
