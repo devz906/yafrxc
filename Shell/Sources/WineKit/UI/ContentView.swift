@@ -5,11 +5,12 @@ import Foundation
 func trigger_jit_bridge()
 
 public struct ContentView: View {
-    @State private var log = "A18 Pro Titan [Deep Scan Mode]\n"
-
+    @State private var log = "A18 Pro [Manual Load Mode]\n"
+    
     public var body: some View {
         VStack(spacing: 20) {
-            Text("WineKit Explorer").font(.title).bold()
+            Text("WineKit").font(.largeTitle).bold()
+            
             ScrollView {
                 Text(log).font(.system(.caption, design: .monospaced))
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -17,60 +18,57 @@ public struct ContentView: View {
             .background(Color.black).foregroundColor(.green)
             .frame(height: 350).cornerRadius(10)
 
-            Button("DEEP SCAN & LAUNCH") {
-                deepScanAndLaunch()
+            Button("DETECT & START WINE") {
+                manualLaunch()
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
+            
+            Text("Place your 'wine' folder in the WineKit folder via Files app").font(.footnote).foregroundColor(.secondary)
         }.padding()
     }
 
-    func deepScanAndLaunch() {
+    func manualLaunch() {
         let fm = FileManager.default
         let docs = fm.urls(for: .documentDirectory, in: .userDomainMask)[0]
         
-        log += "Scanning for Wine executable...\n"
+        log += "Searching for wine folder in Documents...\n"
         
-        // --- 1. SEARCH EVERYTHING ---
-        let enumerator = fm.enumerator(at: docs, includingPropertiesForKeys: [.isRegularFileKey])
-        var possiblePaths: [String] = []
+        // Look for common wine executable paths in your folder
+        let searchPaths = [
+            "wine/loader/wine",
+            "wine/bin/wine",
+            "wine/wine"
+        ]
         
-        while let fileURL = enumerator?.nextObject() as? URL {
-            // We are looking for a file named 'wine' or 'wine-preloader'
-            if fileURL.lastPathComponent == "wine" || fileURL.lastPathComponent == "wine64" {
-                var isDir: ObjCBool = false
-                if fm.fileExists(atPath: fileURL.path, isDirectory: &isDir), !isDir.boolValue {
-                    possiblePaths.append(fileURL.path)
-                }
+        var finalPath: String? = nil
+        for p in searchPaths {
+            let fullPath = docs.appendingPathComponent(p).path
+            if fm.fileExists(atPath: fullPath) {
+                finalPath = fullPath
+                break
             }
         }
-        
-        guard let wineBin = possiblePaths.first else {
+
+        guard let wineBin = finalPath else {
             log += "❌ ERROR: No 'wine' executable found.\n"
-            log += "Found folders: \(try? fm.contentsOfDirectory(atPath: docs.path))\n"
+            log += "Ensure you have a 'wine' folder in Files app.\n"
             return
         }
-        
-        log += "✅ TARGET: \(wineBin)\n"
-        
-        // --- 2. JIT & PERMISSIONS ---
-        log += "Setting Permissions...\n"
+
+        log += "✅ FOUND: \(wineBin)\n"
         try? fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: wineBin)
         
         log += "Triggering JIT...\n"
         trigger_jit_bridge()
         
-        // --- 3. EXECUTION ---
+        let engineRoot = URL(fileURLWithPath: wineBin).deletingLastPathComponent().deletingLastPathComponent().path
+        
         var pid: pid_t = 0
-        let engineRoot = URL(fileURLWithPath: wineBin).deletingLastPathComponent().path
-        
-        // Try to find the lib folder relative to where we found wine
-        let libPath = "\(engineRoot)/../lib:\(docs.path)/wine/lib:\(docs.path)/wine/extra_files"
-        
         let env = [
-            "DYLD_LIBRARY_PATH=\(libPath)",
+            "DYLD_LIBRARY_PATH=\(engineRoot)/lib:\(docs.path)/wine/libs:\(docs.path)/wine/box64/build",
             "WINEPREFIX=\(docs.path)/.wine",
-            "PATH=\(engineRoot):/usr/bin:/bin",
+            "PATH=\(engineRoot)/bin:\(engineRoot)/loader:/usr/bin:/bin",
             "WINEDEBUG=err+all"
         ]
         
@@ -83,8 +81,7 @@ public struct ContentView: View {
         if result == 0 {
             log += "🚀 SUCCESS! PID: \(pid)\n"
         } else {
-            let errorMsg = String(cString: strerror(result))
-            log += "❌ SPAWN ERROR: \(errorMsg)\n"
+            log += "❌ ERROR: \(result) (Check Permissions)\n"
         }
     }
 }
