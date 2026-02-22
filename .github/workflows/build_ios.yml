@@ -9,44 +9,45 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Reassemble Engine Outside Source
+      - name: Kill Broken Symlinks
         run: |
-          # Extract to a folder at the ROOT, far away from the 'Shell' folder
-          mkdir -p ../EXTRACTED_ENGINE_DATA
-          cat EngineParts/wine_parts.* > wine_engine.zip
-          unzip -q wine_engine.zip -d ../EXTRACTED_ENGINE_DATA
-          # Delete the forbidden Info.plist files immediately
-          find ../EXTRACTED_ENGINE_DATA -name "Info.plist" -delete
+          # This specifically fixes the 'ignoring broken symlink' errors in your log
+          find Shell/Sources/WineKit/Resources/ -type l -delete
+          # Completely clear the Resources folder before Xcode starts
+          rm -rf Shell/Sources/WineKit/Resources/*
         
-      - name: Build UI Shell
+      - name: Reassemble Engine (Deep Safe Harbor)
+        run: |
+          mkdir -p ../FINAL_ENGINE_INJECTION
+          cat EngineParts/wine_parts.* > wine_engine.zip
+          unzip -q wine_engine.zip -d ../FINAL_ENGINE_INJECTION
+          # Delete Info.plist to prevent Error 74
+          find ../FINAL_ENGINE_INJECTION -name "Info.plist" -delete
+        
+      - name: Build Bare-Metal Shell
         run: |
           cd Shell
-          # Build only the UI. Since the engine is currently in ../EXTRACTED_ENGINE_DATA,
-          # Xcode won't see it and won't throw Error 74.
+          # We force -Onone to satisfy the indexer and speed up the A18 Pro build
           xcodebuild archive \
             -scheme WineKit \
             -destination "generic/platform=iOS" \
             -archivePath ../WineKit.xcarchive \
-            IPHONEOS_DEPLOYMENT_TARGET=15.0 \
+            SWIFT_OPTIMIZATION_LEVEL="-Onone" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
           
-      - name: Manually Inject Engine & Wrap IPA
+      - name: Final App Assembly
         run: |
           mkdir -p Payload
-          # Find the .app folder
           APP_PATH=$(find WineKit.xcarchive -name "*.app" -type d | head -n 1)
           cp -r "$APP_PATH" Payload/
-          
-          # Inject the engine data into the .app bundle manually
           APP_NAME=$(basename "$APP_PATH")
-          cp -r ../EXTRACTED_ENGINE_DATA "Payload/$APP_NAME/engine_data"
-          
-          # Zip it up
+          # Inject the massive engine into the folder where the Swift code expects it
+          cp -r ../FINAL_ENGINE_INJECTION "Payload/$APP_NAME/engine_data"
           zip -r WineKit.ipa Payload
           
-      - name: Upload Artifact
+      - name: Upload A18 Pro IPA
         uses: actions/upload-artifact@v4
         with:
-          name: A18-Pro-WineKit-App
+          name: WineKit-A18-Pro
           path: WineKit.ipa
