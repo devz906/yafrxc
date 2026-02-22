@@ -1,13 +1,11 @@
 import SwiftUI
 import Foundation
 
-// Tell Swift that this function exists in our C file
 @_silgen_name("trigger_jit_bridge")
 func trigger_jit_bridge()
 
 public struct ContentView: View {
     @State private var logOutput = "A18 Pro [JIT-Link Mode] Ready...\n"
-    @State private var isBooting = false
     
     public init() {}
 
@@ -21,27 +19,55 @@ public struct ContentView: View {
     }
     
     func spawnWine() {
-        let winePath = Bundle.main.bundlePath + "/Frameworks/wine"
+        let bundlePath = Bundle.main.bundlePath
+        let engineRoot = bundlePath + "/Frameworks/engine"
         
-        logOutput += "Triggering JIT Breakpoint 0xf00d...\n"
+        // Use the absolute path to the wine binary
+        let winePath = engineRoot + "/bin/wine"
+        
+        logOutput += "Triggering JIT...\n"
         #if !targetEnvironment(simulator)
         trigger_jit_bridge()
         #endif
 
         var pid: pid_t = 0
-        let args = ["wine", "winecfg"]
+        let args = [winePath, "winecfg"] // Use full path as first arg
         let argv: [UnsafeMutablePointer<CChar>?] = args.map { strdup($0) } + [nil]
         
-        logOutput += "Spawning process...\n"
-        let result = posix_spawn(&pid, winePath, nil, nil, argv, environ)
+        var env = ProcessInfo.processInfo.environment
+        // DYLD_LIBRARY_PATH is restricted on iOS; we must be careful
+        env["DYLD_LIBRARY_PATH"] = "\(engineRoot)/lib:\(engineRoot)/extra_files:\(bundlePath)/Frameworks"
+        env["WINEPREFIX"] = NSHomeDirectory() + "/Documents/.wine"
+        env["PATH"] = "\(engineRoot)/bin:/usr/bin:/bin"
+        env["WINEDEBUG"] = "err+all" // Force wine to tell us what's wrong
+        
+        let envp: [UnsafeMutablePointer<CChar>?] = env.map { strdup("$0.key=$0.value") } + [nil]
+        
+        // Create a pipe to catch the error message
+        let pipe = Pipe()
+        var fileActions: posix_spawn_file_actions_t?
+        posix_spawn_file_actions_init(&fileActions)
+        posix_spawn_file_actions_adddup2(&fileActions, pipe.fileHandleForWriting.fileDescriptor, STDERR_FILENO)
+        
+        logOutput += "Attempting spawn...\n"
+        let result = posix_spawn(&pid, winePath, &fileActions, nil, argv, envp)
         
         if result == 0 {
             logOutput += "🚀 SUCCESS! PID: \(pid)\n"
+            // Start reading the pipe in background
+            DispatchQueue.global().async {
+                let data = pipe.fileHandleForReading.readData(ofLength: 1024)
+                if let output = String(data: data, encoding: .utf8) {
+                    DispatchQueue.main.async { self.logOutput += "WINE ERROR: \(output)\n" }
+                }
+            }
         } else {
             let errorMsg = String(cString: strerror(result))
             logOutput += "SPAWN ERROR: \(errorMsg) (Code: \(result))\n"
         }
         
+        posix_spawn_file_actions_destroy(&fileActions)
         for ptr in argv { if let p = ptr { free(p) } }
+        for ptr in envp { if let p = ptr { free(p) } }
     }
 }
