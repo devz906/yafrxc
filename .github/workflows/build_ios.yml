@@ -1,4 +1,4 @@
-name: Build Split-Engine WineKit
+name: Build Split WineKit
 on:
   push:
     branches: [ main ]
@@ -9,18 +9,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Prepare Engine Body (The Zip)
+      - name: Build Engine ZIP (The Body)
         run: |
-          mkdir -p engine_body
-          # Reassemble the parts
+          mkdir -p engine_dist
+          # Reassemble Wine Core
           cat EngineParts/wine_parts.* > wine_core.zip
-          unzip -q wine_core.zip -d engine_body/
-          # Add the extra wine folder contents
-          if [ -d "wine" ]; then ditto wine engine_body/extra_files; fi
-          # Create the final Body Zip
-          cd engine_body && zip -r ../engine_data.zip . && cd ..
-        
-      - name: Compile Swift Head (The App)
+          unzip -q wine_core.zip -d engine_dist/
+          # Merge the 'wine' folder (Box64/MoltenVK/GTA)
+          if [ -d "wine" ]; then ditto wine engine_dist/; fi
+          # Final Zip for manual upload
+          cd engine_dist && zip -r ../TitanEngine_1.6GB.zip . && cd ..
+          
+      - name: Build WineKit IPA (The Head)
         run: |
           cd Shell/Sources/WineKit
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
@@ -28,14 +28,10 @@ jobs:
           echo "void trigger_jit_bridge(void);" > bridging.h
           swiftc *.swift UI/*.swift jit_trigger.o -target arm64-apple-ios17.0 -sdk "$SDK_PATH" -import-objc-header bridging.h -O -o WineKit
           
-      - name: Assembly
-        run: |
-          rm -rf Payload WineKit.ipa
           mkdir -p Payload/WineKit.app
-          cp Shell/Sources/WineKit/WineKit Payload/WineKit.app/WineKit
-          # Put the engine zip into the App Resources folder
-          cp engine_data.zip Payload/WineKit.app/engine_data.zip
+          cp WineKit Payload/WineKit.app/WineKit
           
+          # Info.plist with File Sharing enabled
           cat <<EOP > Payload/WineKit.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -47,13 +43,16 @@ jobs:
               <key>CFBundleShortVersionString</key><string>1.0</string>
               <key>LSRequiresIPhoneOS</key><true/>
               <key>UIFileSharingEnabled</key><true/>
+              <key>LSSupportsOpeningDocumentsInPlace</key><true/>
           </dict></plist>
           EOP
           
           ditto -c -k --sequesterRsrc --keepParent Payload WineKit.ipa
           
-      - name: Upload
+      - name: Upload Both Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: WineKit-Split-Build
-          path: WineKit.ipa
+          name: WineKit-Complete-Package
+          path: |
+            WineKit.ipa
+            TitanEngine_1.6GB.zip
