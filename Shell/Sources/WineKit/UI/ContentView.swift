@@ -1,39 +1,22 @@
 import SwiftUI
 
 public struct ContentView: View {
-    @State private var status = "Ready for A18 Pro"
-    
+    // We use a simple message string for now to avoid @State compilation issues in raw Swift PM
     public init() {}
 
     public var body: some View {
         VStack(spacing: 20) {
-            Image(systemName: "terminal.fill")
-                .font(.system(size: 80))
-                .foregroundColor(.blue)
-            
-            Text("WineKit Minimalist")
+            Text("WineKit A18 Pro")
                 .font(.largeTitle)
                 .bold()
             
-            Text(status)
-                .foregroundColor(.secondary)
-            
-            Button(action: {
-                launchWine()
-            }) {
-                Text("LAUNCH WINE")
-                    .bold()
-                    .frame(width: 200, height: 50)
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+            Button("LAUNCH WINE") {
+                print("Launching Engine...")
             }
+            .padding()
+            .background(Color.blue)
+            .foregroundColor(.white)
+            .cornerRadius(10)
         }
-    }
-    
-    func launchWine() {
-        status = "Initializing Engine..."
-        // Simple logic to trigger the existing Wine binary
-        print("A18 Pro: Launching Wine...")
     }
 }

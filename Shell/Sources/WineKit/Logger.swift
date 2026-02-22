@@ -1,23 +1,13 @@
-//
-//  Logger.swift
-//  WineKit
-//
-//  Created by David Walter on 03.11.23.
-//
-
 import Foundation
-import OSLog
+import os
 
-extension Logger {
-    static let wine: Logger = {
-        Logger(subsystem: "at.davidwalter.WineKit", category: "Wine")
-    }()
+public struct Logger {
+    public static let shared = os.Logger(subsystem: "com.yafrxc.WineKit", category: "General")
     
-    static let wineKit: Logger = {
-        Logger(subsystem: "at.davidwalter.WineKit", category: "WineKit")
-    }()
+    // Simple init that doesn't need external types
+    public init() {}
     
-    init(process: WineProcess) {
-        self = Logger(subsystem: "at.davidwalter.WineKit", category: process.description)
+    func log(_ message: String) {
+        Self.shared.info("\(message)")
     }
 }
