@@ -9,15 +9,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Kill Broken Symlinks
+      - name: Prep Workspace
         run: |
+          # Ensure the Resources folder is totally empty so the compiler stays happy
           mkdir -p Shell/Sources/WineKit/Resources/
-          if [ -d "Shell/Sources/WineKit/Resources/" ]; then
-            find Shell/Sources/WineKit/Resources/ -type l -delete
-            rm -rf Shell/Sources/WineKit/Resources/*
-          fi
+          rm -rf Shell/Sources/WineKit/Resources/*
+          touch Shell/Sources/WineKit/Resources/.gitkeep
         
-      - name: Reassemble Engine (Deep Safe Harbor)
+      - name: Reassemble Engine (Safe Zone)
         run: |
           mkdir -p ../FINAL_ENGINE_INJECTION
           cat EngineParts/wine_parts.* > wine_engine.zip
@@ -27,7 +26,6 @@ jobs:
       - name: Build UI Shell
         run: |
           cd Shell
-          # The fix: Force the deployment target to iOS 15.0
           xcodebuild archive \
             -scheme WineKit \
             -destination "generic/platform=iOS" \
@@ -43,6 +41,7 @@ jobs:
           APP_PATH=$(find WineKit.xcarchive -name "*.app" -type d | head -n 1)
           cp -r "$APP_PATH" Payload/
           APP_NAME=$(basename "$APP_PATH")
+          # Inject engine into the 'engine_data' subfolder
           cp -r ../FINAL_ENGINE_INJECTION "Payload/$APP_NAME/engine_data"
           zip -r WineKit.ipa Payload
           
