@@ -11,17 +11,17 @@ jobs:
       
       - name: Reassemble Engine in Safe Harbor
         run: |
-          mkdir -p Shell/Sources/WineKit/Resources/
-          # Stitch the parts in a separate folder first
+          # Stitch the parts in a separate folder that Xcode can't see
+          mkdir -p extracted_engine
           cat EngineParts/wine_parts.* > wine_engine.zip
           unzip -q wine_engine.zip -d extracted_engine
-          # Move it to a subfolder that we will manually inject later
-          mv extracted_engine Shell/Sources/WineKit/Resources/engine_data
+          # Remove Info.plist from engine to avoid Apple security conflicts
+          find extracted_engine -name "Info.plist" -delete
         
       - name: Build IPA
         run: |
           cd Shell
-          # Build the UI alone first (fast and clean)
+          # Build only the UI/Shell logic first (this will now be fast and clean)
           xcodebuild archive \
             -scheme WineKit \
             -destination "generic/platform=iOS" \
@@ -34,9 +34,9 @@ jobs:
           APP_PATH=$(find ../WineKit.xcarchive -name "*.app" -type d | head -n 1)
           cp -r "$APP_PATH" ../Payload/
           
-          # Now manually inject the engine data into the IPA Payload
-          # This bypasses the Xcode resource scanner errors
-          cp -r Sources/WineKit/Resources/engine_data "../Payload/$(basename "$APP_PATH")/"
+          # MANUAL INJECTION: Slide the engine data into the app bundle
+          # This bypasses the Resource Scanner entirely
+          cp -r ../extracted_engine "../Payload/$(basename "$APP_PATH")/engine_data"
           
           cd ..
           zip -r WineKit.ipa Payload
