@@ -10,40 +10,48 @@ jobs:
       - uses: actions/checkout@v4
       - name: Deep Cook Engine
         run: |
-          mkdir -p final_engine/bin final_engine/lib
+          mkdir -p final_engine/bin final_engine/lib staging
           
           # 1. Merge the main wine_parts (aa, ab, ac...)
-          echo "Merging wine_parts..."
+          echo "Merging wine_parts (aa-ai)..."
           cat EngineParts/wine_parts.* > wine_raw.zip
           unzip -q wine_raw.zip -d staging/
           
           # 2. Merge your custom wine folder from the repo
           if [ -d "wine" ]; then ditto wine staging/; fi
           
-          # 3. DEEP UNZIP: Unpack the internal zips (moltenvk, assets, etc.)
-          echo "Deep unpacking internal parts..."
+          # 3. SPECIFIC MERGE: GTA Bundle Parts
+          echo "Merging GTA Bundle Parts..."
+          # If they are named 'gta bundle part a', 'gta bundle part b'
+          cat staging/"gta bundle part "* > staging/gta_full.zip 2>/dev/null || echo "No GTA parts found"
+          
+          # 4. SPECIFIC MERGE: Wine Asset Parts
+          echo "Merging Wine Asset Parts..."
+          cat staging/wine_assets_part_* > staging/assets_full.zip 2>/dev/null || echo "No Asset parts found"
+          
+          # 5. DEEP UNPACK EVERYTHING
+          echo "Deep unpacking all resulting zips..."
           find staging -name "*.zip" -exec unzip -o -q {} -d staging/ \;
           
-          # 4. CRITICAL: Find the actual binaries now that everything is open
-          # Look for wine, wine64, box64, wineserver
+          # 6. FIND THE BRAINS
+          # We look for the binaries after all the merges and unzips
           WINE_BIN=$(find staging -name "wine" -type f ! -name "*.*" | head -n 1)
           SERVER_BIN=$(find staging -name "wineserver" -type f | head -n 1)
           BOX_BIN=$(find staging -name "box64" -type f | head -n 1)
           
-          echo "Chef Found: $WINE_BIN"
-          echo "Server Found: $SERVER_BIN"
-          echo "Box64 Found: $BOX_BIN"
+          echo "FINAL CHECK:"
+          echo "Chef (Wine): $WINE_BIN"
+          echo "Server: $SERVER_BIN"
+          echo "Box64: $BOX_BIN"
           
-          # 5. Move everything to final structure
+          # 7. ASSEMBLE FINAL STRUCTURE
           if [ ! -z "$WINE_BIN" ]; then cp "$WINE_BIN" final_engine/bin/wine; fi
           if [ ! -z "$SERVER_BIN" ]; then cp "$SERVER_BIN" final_engine/bin/wineserver; fi
           if [ ! -z "$BOX_BIN" ]; then cp "$BOX_BIN" final_engine/bin/box64; fi
           
-          # Copy everything else (DLLs, libs)
+          # Copy libs and support files
           ditto staging/ final_engine/
-          
-          # 6. Set executable permissions
-          chmod +x final_engine/bin/*
+          chmod +x final_engine/bin/* 2>/dev/null || true
           
           cd final_engine && zip -r ../Titan-Box64-Cooked.zip . && cd ..
           
@@ -57,7 +65,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build IPA
+      - name: Build Titan UI
         run: |
           cd Shell/Sources/WineKit
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
