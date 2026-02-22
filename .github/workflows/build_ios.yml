@@ -18,8 +18,9 @@ jobs:
       - name: Build Shell
         run: |
           cd Shell
+          # Building with the Package name as the scheme
           xcodebuild build \
-            -scheme WineKit \
+            -scheme Shell \
             -destination "generic/platform=iOS" \
             -configuration Release \
             -derivedDataPath ./build \
@@ -30,18 +31,18 @@ jobs:
         run: |
           mkdir -p Payload/WineKit.app
           
-          # Find the binary - it should now be in the Release-iphoneos folder
-          BINARY_PATH=$(find Shell/build/Build/Products/Release-iphoneos -type f -maxdepth 2 ! -name "*.plist" ! -name "*.bundle" | head -n 1)
+          # Find the binary - it's often named 'WineKit' or 'Shell'
+          echo "Hunting for executable binary..."
+          BINARY_PATH=$(find Shell/build/Build/Products/Release-iphoneos -type f -perm +111 ! -name "*.plist" ! -name "*.bundle" | head -n 1)
           
           if [ -z "$BINARY_PATH" ]; then
-            echo "Binary not found in products, searching entire build folder..."
-            BINARY_PATH=$(find Shell/build -type f -perm +111 ! -path "*.app/*" ! -path "*.framework/*" | head -n 1)
+             BINARY_PATH=$(find Shell/build -type f -perm +111 ! -path "*.app/*" | head -n 1)
           fi
           
-          echo "Found Binary at: $BINARY_PATH"
+          echo "Target binary found at: $BINARY_PATH"
           cp "$BINARY_PATH" Payload/WineKit.app/WineKit
           
-          # Create Info.plist
+          # Info.plist generation
           cat <<EOP > Payload/WineKit.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -65,6 +66,7 @@ jobs:
           </plist>
           EOP
           
+          # Inject Engine
           mkdir -p "Payload/WineKit.app/wine"
           cp -r ../FINAL_ENGINE_INJECTION/* "Payload/WineKit.app/wine/"
           
