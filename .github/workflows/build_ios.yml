@@ -9,25 +9,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Surgical Engine Assembly
+      - name: Assemble Mega-Engine
         run: |
           mkdir -p ./engine_temp
           
-          # 1. Reassemble Wine Core
+          # 1. Wine Core
           cat EngineParts/wine_parts.* > wine_engine.zip
           unzip -q wine_engine.zip -d ./engine_temp
           
-          # 2. Extract Box64 & MoltenVK from your 'wine' folder
-          # We are grabbing the compiled binaries found in your list.txt
-          find wine/box64 -name "box64*" -exec cp {} ./engine_temp/ \; 2>/dev/null || true
-          find wine/MoltenVK -name "*.a" -o -name "*.dylib" -exec cp {} ./engine_temp/ \; 2>/dev/null || true
+          # 2. Copy the ENTIRE wine folder (Box64/MoltenVK/DLLs)
+          # This is where the missing 600MB lives
+          if [ -d "wine" ]; then
+            cp -RP wine/* ./engine_temp/
+          fi
           
-          # 3. Grab the Frameworks copy of MoltenVK
+          # 3. Copy extra Frameworks
           cp Shell/Frameworks/libMoltenVK.a ./engine_temp/ 2>/dev/null || true
-          
-          # 4. Grab all DLLs (The Windows Organs)
-          mkdir -p ./engine_temp/lib/wine/aarch64-windows
-          find wine/dlls -name "*.dll" -exec cp {} ./engine_temp/lib/wine/aarch64-windows/ \;
           
           chmod -R +x ./engine_temp/
         
@@ -46,11 +43,16 @@ jobs:
           cp Shell/Sources/WineKit/WineKit Payload/WineKit.app/WineKit
           cp -RP ./engine_temp/* Payload/WineKit.app/Frameworks/wine/
           
-          # Truth-Check
-          echo "FINAL BUNDLE SIZE:"
-          du -sh Payload
+          # SIZE CHECK
+          PAYLOAD_SIZE=$(du -sm Payload | cut -f1)
+          echo "FINAL SIZE: $PAYLOAD_SIZE MB"
           
-          # Info.plist
+          # FAIL IF TOO SMALL (Under 1GB)
+          if [ "$PAYLOAD_SIZE" -lt 1000 ]; then
+            echo "❌ ERROR: IPA is only $PAYLOAD_SIZE MB. Still missing parts!"
+            exit 1
+          fi
+          
           cat <<EOP > Payload/WineKit.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -71,5 +73,5 @@ jobs:
       - name: Upload JIT IPA
         uses: actions/upload-artifact@v4
         with:
-          name: WineKit-Final
+          name: WineKit-JIT-Final
           path: WineKit.ipa
