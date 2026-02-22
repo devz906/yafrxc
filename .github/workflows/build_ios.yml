@@ -19,6 +19,8 @@ jobs:
       - name: Build UI Shell
         run: |
           cd Shell
+          # Remove any old build artifacts that might be confusing the compiler
+          rm -rf .swiftpm/xcode
           xcodebuild archive \
             -scheme WineKit \
             -destination "generic/platform=iOS" \
@@ -31,19 +33,13 @@ jobs:
       - name: Final App Assembly
         run: |
           mkdir -p Payload
-          # Search for the app inside the Shell folder where we just built it
+          # Explicitly find the .app inside the local folder
           APP_PATH=$(find Shell/WineKit.xcarchive -name "*.app" -type d | head -n 1)
-          echo "Found App at: $APP_PATH"
-          
-          if [ -z "$APP_PATH" ]; then
-            echo "ERROR: Could not find .app bundle!"
-            exit 1
-          fi
+          if [ -z "$APP_PATH" ]; then exit 1; fi
           
           cp -r "$APP_PATH" Payload/
           APP_NAME=$(basename "$APP_PATH")
           
-          # Inject engine into the bundle
           mkdir -p "Payload/$APP_NAME/wine"
           cp -r ../FINAL_ENGINE_INJECTION/* "Payload/$APP_NAME/wine/"
           
