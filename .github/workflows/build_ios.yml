@@ -14,8 +14,8 @@ jobs:
           mkdir -p ./engine_temp
           cat EngineParts/wine_parts.* > wine_engine.zip
           unzip -q wine_engine.zip -d ./engine_temp
-          echo "Engine structure:"
-          ls -R ./engine_temp | head -n 20
+          echo "Structure check:"
+          ls ./engine_temp
         
       - name: Force Compilation (Raw Swiftc)
         run: |
@@ -28,38 +28,25 @@ jobs:
           
       - name: Final App Assembly
         run: |
-          # Create the necessary structure
+          # 1. Start fresh
+          rm -rf Payload
           mkdir -p Payload/WineKit.app/Frameworks
           mkdir -p Payload/WineKit.app/wine
           
-          # 1. Copy everything to the wine folder first
-          cp -r ./engine_temp/* Payload/WineKit.app/wine/
-          
-          # 2. Copy/Link the 'wine' executable to Frameworks
-          # We use -r just in case 'wine' is a bundle/directory
-          cp -r ./engine_temp/wine Payload/WineKit.app/Frameworks/ || echo "Wine binary move handled"
-          
-          # 3. Copy Shell Binary
+          # 2. Copy Shell Binary
           cp Shell/Sources/WineKit/WineKit_Binary Payload/WineKit.app/WineKit
           
-          # 4. Create JIT entitlements
-          cat <<EOT > entitlements.plist
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>get-task-allow</key>
-              <true/>
-          </dict>
-          </plist>
-          EOT
-
-          # 5. Mass Unlock and Sign
-          # This ensures the kernel sees the Frameworks binary as valid
-          codesign -s - --entitlements entitlements.plist --force Payload/WineKit.app/Frameworks/wine || true
-          find Payload/WineKit.app -type f -exec chmod 777 {} +
+          # 3. Copy Engine (using -R to handle directories)
+          cp -R ./engine_temp/* Payload/WineKit.app/wine/
           
-          # 6. Create Info.plist
+          # 4. Specific Frameworks fix (Copying the main wine entry point)
+          if [ -d "./engine_temp/wine" ]; then
+             cp -R ./engine_temp/wine Payload/WineKit.app/Frameworks/
+          else
+             cp ./engine_temp/wine Payload/WineKit.app/Frameworks/ || true
+          fi
+          
+          # 5. Create Info.plist
           cat <<EOP > Payload/WineKit.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -80,8 +67,11 @@ jobs:
               <key>MinimumOSVersion</key>
               <string>17.0</string>
           </dict>
-          </EOP>
+          </plist>
+          EOP
           
+          # 6. Final Permissions & Zip
+          chmod -R 777 Payload
           zip -r WineKit.ipa Payload
           
       - name: Upload JIT IPA
@@ -89,3 +79,4 @@ jobs:
         with:
           name: WineKit-JIT-Ready
           path: WineKit.ipa
+          if-no-files-found: error
