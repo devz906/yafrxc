@@ -19,27 +19,31 @@ public struct ContentView: View {
     func spawnWine() {
         let winePath = Bundle.main.bundlePath + "/Frameworks/wine"
         
-        // --- THE JIT TRIGGER ---
-        logOutput += "Sending 0xf00d JIT Signal...\n"
-        // This triggers the 'CMD_PREPARE_REGION' in your Amethyst script
-        // x16 = 1 (Prepare Region), brk #0xf00d (The Hook)
+        // --- THE JIT TRIGGER (For Amethyst-MeloNX.js) ---
+        logOutput += "Triggering JIT Breakpoint 0xf00d...\n"
+        #if !targetEnvironment(simulator)
         var trigger: Int = 0
-        #if targetEnvironment(simulator)
-        #else
         asm volatile("mov x16, #1; brk #0xf00d" : "=r" (trigger) : : "x16")
         #endif
-        // -----------------------
+        // -----------------------------------------------
 
         var pid: pid_t = 0
         let args = ["wine", "winecfg"]
-        let argv: [UnsafeMutablePointer<CChar>?] = args.map { strdup(/bin/bash) } + [nil]
         
+        // FIXED: Using $0 to correctly map the arguments
+        let argv: [UnsafeMutablePointer<CChar>?] = args.map { strdup($0) } + [nil]
+        
+        logOutput += "Spawning process...\n"
         let result = posix_spawn(&pid, winePath, nil, nil, argv, environ)
         
         if result == 0 {
             logOutput += "🚀 SUCCESS! PID: \(pid)\n"
         } else {
-            logOutput += "SPAWN ERROR: \(String(cString: strerror(result))) (Code: \(result))\n"
+            let errorMsg = String(cString: strerror(result))
+            logOutput += "SPAWN ERROR: \(errorMsg) (Code: \(result))\n"
         }
+        
+        // Cleanup memory
+        for ptr in argv { if let p = ptr { free(p) } }
     }
 }
