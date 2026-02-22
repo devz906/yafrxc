@@ -1,50 +1,15 @@
-// swift-tools-version: 5.9
-// The swift-tools-version declares the minimum version of Swift required to build this package.
-
+// swift-tools-version: 5.10
 import PackageDescription
 
 let package = Package(
-    name: "WineKit",
-    platforms: [.macOS(.v13)],
+    name: "Shell",
+    platforms: [.iOS(.v17)],
     products: [
-        .library(
-            name: "WineKit",
-            targets: ["WineKit"]
-        ),
-        .library(
-            name: "WindowsFileKit",
-            targets: ["WindowsFileKit"]
-        )
+        .library(name: "WindowsFileKit", targets: ["WindowsFileKit"]),
+        .library(name: "WineKit", targets: ["WineKit"])
     ],
     targets: [
-        .target(
-            name: "WineKit",
-            dependencies: ["WindowsFileKit"],
-            resources: [.process("Resources")]
-        ),
-        .target(
-            name: "WindowsFileKit"
-        ),
-        .testTarget(
-            name: "WineKitTests",
-            dependencies: ["WineKit"]
-        ),
-        .testTarget(
-            name: "WindowsFileKitTests",
-            dependencies: ["WindowsFileKit"],
-            resources: [.process("Resources")]
-        ),
-        .plugin(
-            name: "WinetricksPlugin",
-            capability: .command(
-                intent: .custom(verb: "winetricks-generate", description: "Generate enums from latest Winetricks verbs"),
-                permissions: [
-                    .allowNetworkConnections(
-                        scope: .all(),
-                        reason: "Download latest verbs"
-                    )
-                ]
-            )
-        )
+        .target(name: "WindowsFileKit"),
+        .target(name: "WineKit", dependencies: ["WindowsFileKit"])
     ]
 )

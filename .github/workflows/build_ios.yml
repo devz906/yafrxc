@@ -19,8 +19,8 @@ jobs:
       - name: Build Bare-Metal Shell
         run: |
           cd Shell
-          # Clearing any cached derived data to fix the accessor error
-          rm -rf .swiftpm
+          # Wipe DerivedData locally in the runner to kill the bad bundle accessor
+          rm -rf ~/Library/Developer/Xcode/DerivedData/*
           
           xcodebuild archive \
             -scheme WineKit \
@@ -28,8 +28,6 @@ jobs:
             -archivePath ../WineKit.xcarchive \
             IPHONEOS_DEPLOYMENT_TARGET=18.0 \
             SWIFT_OPTIMIZATION_LEVEL="-Onone" \
-            SKIP_INSTALL=NO \
-            BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
           
@@ -40,7 +38,7 @@ jobs:
           cp -r "$APP_PATH" Payload/
           APP_NAME=$(basename "$APP_PATH")
           
-          # Injecting the engine directly into the flattened bundle
+          # MANUALLY create the wine folder inside the .app bundle
           mkdir -p "Payload/$APP_NAME/wine"
           cp -r ../FINAL_ENGINE_INJECTION/* "Payload/$APP_NAME/wine/"
           
