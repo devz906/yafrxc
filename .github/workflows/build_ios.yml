@@ -9,50 +9,45 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Reassemble Engine + GTA Parts
+      - name: Surgical Engine Assembly
         run: |
           mkdir -p ./engine_temp
           
-          # 1. Merge the 762MB Wine Core
-          if ls EngineParts/wine_parts.* 1> /dev/null 2>&1; then
-            cat EngineParts/wine_parts.* > wine_engine.zip
-            unzip -q wine_engine.zip -d ./engine_temp
-          fi
+          # 1. Reassemble Wine Core
+          cat EngineParts/wine_parts.* > wine_engine.zip
+          unzip -q wine_engine.zip -d ./engine_temp
           
-          # 2. Merge the GTA Engine Parts (Box64/MoltenVK)
-          # Assuming they are in the 'wine' folder as you mentioned
-          if [ -d "wine" ]; then
-             cp -RP wine/* ./engine_temp/
-          fi
+          # 2. Extract Box64 & MoltenVK from your 'wine' folder
+          # We are grabbing the compiled binaries found in your list.txt
+          find wine/box64 -name "box64*" -exec cp {} ./engine_temp/ \; 2>/dev/null || true
+          find wine/MoltenVK -name "*.a" -o -name "*.dylib" -exec cp {} ./engine_temp/ \; 2>/dev/null || true
           
-          # 3. Double check for any loose box64/moltenvk files
-          find . -name "box64*" -exec cp {} ./engine_temp/ \; 2>/dev/null || true
-          find . -name "*MoltenVK*" -exec cp {} ./engine_temp/ \; 2>/dev/null || true
+          # 3. Grab the Frameworks copy of MoltenVK
+          cp Shell/Frameworks/libMoltenVK.a ./engine_temp/ 2>/dev/null || true
+          
+          # 4. Grab all DLLs (The Windows Organs)
+          mkdir -p ./engine_temp/lib/wine/aarch64-windows
+          find wine/dlls -name "*.dll" -exec cp {} ./engine_temp/lib/wine/aarch64-windows/ \;
           
           chmod -R +x ./engine_temp/
         
-      - name: Compile JIT Bridge & Shell
+      - name: Compile JIT Bridge
         run: |
           cd Shell/Sources/WineKit
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
           clang -target arm64-apple-ios17.0 -isysroot "$SDK_PATH" -c jit_trigger.c -o jit_trigger.o
           echo "void trigger_jit_bridge(void);" > bridging.h
-          swiftc *.swift UI/*.swift jit_trigger.o \
-            -target arm64-apple-ios17.0 \
-            -sdk "$SDK_PATH" \
-            -import-objc-header bridging.h \
-            -O -o WineKit
+          swiftc *.swift UI/*.swift jit_trigger.o -target arm64-apple-ios17.0 -sdk "$SDK_PATH" -import-objc-header bridging.h -O -o WineKit
           
       - name: Final App Assembly
         run: |
           rm -rf Payload WineKit.ipa
           mkdir -p Payload/WineKit.app/Frameworks/wine
-          
           cp Shell/Sources/WineKit/WineKit Payload/WineKit.app/WineKit
           cp -RP ./engine_temp/* Payload/WineKit.app/Frameworks/wine/
           
-          # This line is the truth-teller:
-          echo "--- CHECKING FINAL SIZE ---"
+          # Truth-Check
+          echo "FINAL BUNDLE SIZE:"
           du -sh Payload
           
           # Info.plist
@@ -70,13 +65,11 @@ jobs:
           </dict></plist>
           EOP
           
-          # Fix executable permissions for the iPhone
           find Payload/WineKit.app -type f \( -name "wine*" -or -name "box64*" -or -name "*.so" -or -name "*.dylib" \) -exec chmod +x {} +
-          
           ditto -c -k --sequesterRsrc --keepParent Payload WineKit.ipa
           
       - name: Upload JIT IPA
         uses: actions/upload-artifact@v4
         with:
-          name: WineKit-JIT-Final
+          name: WineKit-Final
           path: WineKit.ipa
