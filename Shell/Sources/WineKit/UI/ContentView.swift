@@ -1,71 +1,45 @@
 import SwiftUI
 import Foundation
 
-// Import the low-level process spawner
-#if canImport(Darwin)
-import Darwin
-#endif
-
 public struct ContentView: View {
-    @State private var logOutput = "A18 Pro [JIT ACTIVE] Ready...\n"
+    @State private var logOutput = "A18 Pro [JIT-Link Mode] Ready...\n"
     @State private var isBooting = false
     
     public init() {}
 
     public var body: some View {
-        VStack(spacing: 20) {
-            Text("WineKit A18 Terminal").font(.headline)
-            
-            ScrollView {
-                Text(logOutput)
-                    .font(.system(.caption, design: .monospaced))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .background(Color.black)
-                    .foregroundColor(.green)
-            }
-            .frame(height: 350)
-
-            Button(action: {
-                spawnWine()
-            }) {
-                Text(isBooting ? "RUNNING..." : "LAUNCH WINECFG")
-                    .bold()
-                    .frame(width: 250, height: 55)
-                    .background(isBooting ? Color.gray : Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
-            }
+        VStack {
+            Text("WineKit Terminal").font(.headline)
+            ScrollView { Text(logOutput).font(.caption).monospaced().padding() }
+                .background(Color.black).foregroundColor(.green).frame(height: 300)
+            Button("LAUNCH WINECFG") { spawnWine() }.buttonStyle(.borderedProminent)
         }
-        .padding()
     }
     
     func spawnWine() {
-        isBooting = true
-        let winePath = Bundle.main.bundlePath + "/wine/wine"
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].path
+        let winePath = Bundle.main.bundlePath + "/Frameworks/wine"
         
-        logOutput += "Setting WINEPREFIX...\n"
-        setenv("WINEPREFIX", docs + "/.wine", 1)
-        setenv("DYLD_LIBRARY_PATH", Bundle.main.bundlePath + "/wine/lib", 1)
-        
+        // --- THE JIT TRIGGER ---
+        logOutput += "Sending 0xf00d JIT Signal...\n"
+        // This triggers the 'CMD_PREPARE_REGION' in your Amethyst script
+        // x16 = 1 (Prepare Region), brk #0xf00d (The Hook)
+        var trigger: Int = 0
+        #if targetEnvironment(simulator)
+        #else
+        asm volatile("mov x16, #1; brk #0xf00d" : "=r" (trigger) : : "x16")
+        #endif
+        // -----------------------
+
         var pid: pid_t = 0
-        let args: [String] = ["wine", "winecfg"]
-        let argv: [UnsafeMutablePointer<CChar>?] = args.map { strdup($0) } + [nil]
-        
-        logOutput += "Spawning process via posix_spawn...\n"
+        let args = ["wine", "winecfg"]
+        let argv: [UnsafeMutablePointer<CChar>?] = args.map { strdup(/bin/bash) } + [nil]
         
         let result = posix_spawn(&pid, winePath, nil, nil, argv, environ)
         
         if result == 0 {
-            logOutput += "SUCCESS! Process ID: \(pid)\n"
-            logOutput += "Wine is now initializing in the background.\n"
+            logOutput += "🚀 SUCCESS! PID: \(pid)\n"
         } else {
-            let errorDescription = String(cString: strerror(result))
-            logOutput += "SPAWN ERROR: \(errorDescription) (Code: \(result))\n"
+            logOutput += "SPAWN ERROR: \(String(cString: strerror(result))) (Code: \(result))\n"
         }
-        
-        // Clean up memory
-        for ptr in argv { free(ptr) }
     }
 }
