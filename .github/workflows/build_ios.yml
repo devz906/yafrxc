@@ -1,4 +1,4 @@
-name: Build Titan Box64 Engine
+name: Titan Box64 Ultra-Cooker
 on:
   push:
     branches: [ main ]
@@ -8,51 +8,56 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Cook the Box64 Engine
+      - name: Deep Cook Engine
         run: |
-          # 1. Clear the counter
-          rm -rf engine_cooked staging
-          mkdir -p engine_cooked/bin engine_cooked/lib
+          mkdir -p final_engine/bin final_engine/lib
           
-          # 2. Extract Wine Core (The Body)
-          echo "Unpacking Wine Core..."
+          # 1. Merge the main wine_parts (aa, ab, ac...)
+          echo "Merging wine_parts..."
           cat EngineParts/wine_parts.* > wine_raw.zip
           unzip -q wine_raw.zip -d staging/
           
-          # 3. Find the Chef (Wine) and Server
-          WINE_EXE=$(find staging -name "wine" -type f | head -n 1)
-          SERVER_EXE=$(find staging -name "wineserver" -type f | head -n 1)
+          # 2. Merge your custom wine folder from the repo
+          if [ -d "wine" ]; then ditto wine staging/; fi
           
-          if [ -z "$WINE_EXE" ]; then echo "❌ NO WINE BINARY!"; exit 1; fi
+          # 3. DEEP UNZIP: Unpack the internal zips (moltenvk, assets, etc.)
+          echo "Deep unpacking internal parts..."
+          find staging -name "*.zip" -exec unzip -o -q {} -d staging/ \;
           
-          cp "$WINE_EXE" engine_cooked/bin/wine
-          cp "$SERVER_EXE" engine_cooked/bin/wineserver
-          ditto staging/lib engine_cooked/lib/
+          # 4. CRITICAL: Find the actual binaries now that everything is open
+          # Look for wine, wine64, box64, wineserver
+          WINE_BIN=$(find staging -name "wine" -type f ! -name "*.*" | head -n 1)
+          SERVER_BIN=$(find staging -name "wineserver" -type f | head -n 1)
+          BOX_BIN=$(find staging -name "box64" -type f | head -n 1)
           
-          # 4. Inject Box64 & Custom Files (The Flavor)
-          echo "Merging Box64 and Custom Libs..."
-          if [ -d "wine" ]; then
-            # Move your custom 'wine' folder contents into the cooked engine
-            ditto wine engine_cooked/
-          fi
+          echo "Chef Found: $WINE_BIN"
+          echo "Server Found: $SERVER_BIN"
+          echo "Box64 Found: $BOX_BIN"
           
-          # 5. Permission Check (Pre-cooking the execution bit)
-          chmod +x engine_cooked/bin/*
+          # 5. Move everything to final structure
+          if [ ! -z "$WINE_BIN" ]; then cp "$WINE_BIN" final_engine/bin/wine; fi
+          if [ ! -z "$SERVER_BIN" ]; then cp "$SERVER_BIN" final_engine/bin/wineserver; fi
+          if [ ! -z "$BOX_BIN" ]; then cp "$BOX_BIN" final_engine/bin/box64; fi
           
-          # 6. Final Box64 Branding
-          cd engine_cooked && zip -r ../Titan-Box64-Engine.zip . && cd ..
+          # Copy everything else (DLLs, libs)
+          ditto staging/ final_engine/
+          
+          # 6. Set executable permissions
+          chmod +x final_engine/bin/*
+          
+          cd final_engine && zip -r ../Titan-Box64-Cooked.zip . && cd ..
           
       - name: Upload Engine
         uses: actions/upload-artifact@v4
         with:
           name: Titan-Box64-Body
-          path: Titan-Box64-Engine.zip
+          path: Titan-Box64-Cooked.zip
 
   build_ui:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build Titan UI
+      - name: Build IPA
         run: |
           cd Shell/Sources/WineKit
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
@@ -76,5 +81,5 @@ jobs:
       - name: Upload UI
         uses: actions/upload-artifact@v4
         with:
-          name: TitanBox64-UI-Head
+          name: TitanBox64-UI
           path: TitanBox64.ipa
