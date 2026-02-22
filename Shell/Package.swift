@@ -10,8 +10,7 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "WineKit",
-            path: "Sources/WineKit",
-            resources: [.process("Resources")]
+            path: "Sources/WineKit"
         )
     ]
 )
