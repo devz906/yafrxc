@@ -29,15 +29,21 @@ jobs:
           
       - name: Final App Assembly
         run: |
-          # 1. Create a dummy .app structure because xcodebuild-package sometimes only outputs the binary
           mkdir -p Payload/WineKit.app
           
-          # 2. Find the compiled binary and move it into the bundle
-          BINARY_PATH=$(find Shell/build -type f -perm +111 -name "WineKit" | head -n 1)
+          # 1. Find ANY executable binary in the build folder (excluding object files)
+          # We look for a file that is executable and not a directory
+          BINARY_PATH=$(find Shell/build/Build/Products/Release-iphoneos -type f -maxdepth 1 -perm +111 | head -n 1)
+          
+          if [ -z "$BINARY_PATH" ]; then
+            echo "Searching all of build folder for binary..."
+            BINARY_PATH=$(find Shell/build -type f -perm +111 -name "Shell" -o -name "WineKit" | head -n 1)
+          fi
+          
           echo "Found Binary at: $BINARY_PATH"
           cp "$BINARY_PATH" Payload/WineKit.app/WineKit
           
-          # 3. Create a minimal Info.plist so iOS recognizes it
+          # 2. Create the Info.plist
           cat <<EOP > Payload/WineKit.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -61,7 +67,7 @@ jobs:
           </plist>
           EOP
           
-          # 4. Inject the 700MB Engine
+          # 3. Inject the 700MB Engine
           mkdir -p "Payload/WineKit.app/wine"
           cp -r ../FINAL_ENGINE_INJECTION/* "Payload/WineKit.app/wine/"
           
