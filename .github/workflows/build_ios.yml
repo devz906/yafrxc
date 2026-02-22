@@ -15,30 +15,25 @@ jobs:
           cat EngineParts/wine_parts.* > wine_engine.zip
           unzip -q wine_engine.zip -d ../FINAL_ENGINE_INJECTION
         
-      - name: Build Shell (Debug Mode)
+      - name: Force Compilation (Raw Swiftc)
         run: |
-          cd Shell
-          # Switching to Debug to avoid the -Owholemodule crash
-          xcodebuild build \
-            -scheme Shell \
-            -destination "generic/platform=iOS" \
-            -configuration Debug \
-            -derivedDataPath ./build \
-            -sdk iphoneos \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            COMPILER_INDEX_STORE_ENABLE=NO
+          cd Shell/Sources/WineKit
+          SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
+          
+          # Compile all swift files directly into a single binary named 'WineKit'
+          swiftc *.swift UI/*.swift \
+            -target arm64-apple-ios17.0 \
+            -sdk "$SDK_PATH" \
+            -O -whole-module-optimization \
+            -o WineKit_Binary
           
       - name: Final App Assembly
         run: |
           mkdir -p Payload/WineKit.app
           
-          # Find the binary in the Debug-iphoneos folder
-          BINARY_PATH=$(find Shell/build/Build/Products/Debug-iphoneos -type f -perm +111 ! -name "*.plist" ! -name "*.bundle" | head -n 1)
-          
-          echo "Found Binary at: $BINARY_PATH"
-          cp "$BINARY_PATH" Payload/WineKit.app/WineKit
+          # Move the binary we just made
+          cp Shell/Sources/WineKit/WineKit_Binary Payload/WineKit.app/WineKit
+          chmod +x Payload/WineKit.app/WineKit
           
           # Create Info.plist
           cat <<EOP > Payload/WineKit.app/Info.plist
