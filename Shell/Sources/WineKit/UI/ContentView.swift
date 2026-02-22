@@ -5,7 +5,7 @@ import Foundation
 func trigger_jit_bridge()
 
 public struct ContentView: View {
-    @State private var log = "A18 Pro [Manual Load Mode]\n"
+    @State private var log = "A18 Pro Titan: Manual Engine Mode\n"
     
     public var body: some View {
         VStack(spacing: 20) {
@@ -18,70 +18,55 @@ public struct ContentView: View {
             .background(Color.black).foregroundColor(.green)
             .frame(height: 350).cornerRadius(10)
 
-            Button("DETECT & START WINE") {
-                manualLaunch()
+            Button("DETECT & START") {
+                launchFromDocs()
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
+            .buttonStyle(.borderedProminent).controlSize(.large)
             
-            Text("Place your 'wine' folder in the WineKit folder via Files app").font(.footnote).foregroundColor(.secondary)
+            Text("Download the Engine ZIP and extract it into the WineKit folder via Files app.").font(.footnote).foregroundColor(.secondary).multilineTextAlignment(.center)
         }.padding()
     }
 
-    func manualLaunch() {
+    func launchFromDocs() {
         let fm = FileManager.default
         let docs = fm.urls(for: .documentDirectory, in: .userDomainMask)[0]
         
-        log += "Searching for wine folder in Documents...\n"
+        // This searches for the 'wine' binary anywhere in your documents
+        let enumerator = fm.enumerator(at: docs, includingPropertiesForKeys: nil)
+        var wineBin: String? = nil
         
-        // Look for common wine executable paths in your folder
-        let searchPaths = [
-            "wine/loader/wine",
-            "wine/bin/wine",
-            "wine/wine"
-        ]
-        
-        var finalPath: String? = nil
-        for p in searchPaths {
-            let fullPath = docs.appendingPathComponent(p).path
-            if fm.fileExists(atPath: fullPath) {
-                finalPath = fullPath
+        while let fileURL = enumerator?.nextObject() as? URL {
+            if fileURL.lastPathComponent == "wine" && !fileURL.hasDirectoryPath {
+                wineBin = fileURL.path
                 break
             }
         }
 
-        guard let wineBin = finalPath else {
-            log += "❌ ERROR: No 'wine' executable found.\n"
-            log += "Ensure you have a 'wine' folder in Files app.\n"
+        guard let target = wineBin else {
+            log += "❌ ERROR: No 'wine' binary found in Documents.\n"
             return
         }
 
-        log += "✅ FOUND: \(wineBin)\n"
-        try? fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: wineBin)
+        log += "✅ FOUND: \(target)\n"
+        try? fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: target)
         
         log += "Triggering JIT...\n"
         trigger_jit_bridge()
         
-        let engineRoot = URL(fileURLWithPath: wineBin).deletingLastPathComponent().deletingLastPathComponent().path
+        let engineRoot = URL(fileURLWithPath: target).deletingLastPathComponent().deletingLastPathComponent().path
         
         var pid: pid_t = 0
         let env = [
             "DYLD_LIBRARY_PATH=\(engineRoot)/lib:\(docs.path)/wine/libs:\(docs.path)/wine/box64/build",
             "WINEPREFIX=\(docs.path)/.wine",
-            "PATH=\(engineRoot)/bin:\(engineRoot)/loader:/usr/bin:/bin",
-            "WINEDEBUG=err+all"
+            "PATH=\(engineRoot)/bin:\(engineRoot)/loader:/usr/bin:/bin"
         ]
         
         var envp = env.map { strdup($0) } + [nil]
-        var argv = [strdup(wineBin), strdup("winecfg"), nil]
+        var argv = [strdup(target), strdup("winecfg"), nil]
         
         log += "Spawning...\n"
-        let result = posix_spawn(&pid, wineBin, nil, nil, &argv, &envp)
-        
-        if result == 0 {
-            log += "🚀 SUCCESS! PID: \(pid)\n"
-        } else {
-            log += "❌ ERROR: \(result) (Check Permissions)\n"
-        }
+        let result = posix_spawn(&pid, target, nil, nil, &argv, &envp)
+        log += result == 0 ? "🚀 SUCCESS! PID: \(pid)\n" : "❌ FAILED: \(result)\n"
     }
 }
